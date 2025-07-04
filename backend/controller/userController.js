@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import { sendPassChangeAlert , sendWelcomeEmail } from "../services/EmailService.js";
+import { sendPassChangeAlert , sendWelcomeEmail } from "../services/emailService.js";
 import { comparePassword, hashPassword } from "../utils/hashed.js";
 
 const completeProfile = async (req, res) => {
