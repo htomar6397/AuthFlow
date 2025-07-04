@@ -6,7 +6,7 @@ import {
     invalidateRefreshToken, 
 } from '../services/jwtService.js';
 import { sendCookie , deleteCookie } from '../services/cookieService.js';
-import  { sendPass, sendOtp } from "../services/EmailService.js";
+import  { sendPass, sendOtp } from "../services/emailService.js";
 import otpManager from "../utils/otpStore.js";
 import { hashPassword } from "../utils/hashed.js";
 
