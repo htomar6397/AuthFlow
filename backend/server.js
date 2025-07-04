@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import { applyRateLimit } from './middleware/rateLimiterMiddleware.js';
 import { authenticate } from './middleware/authMiddleware.js';
 import cookieParser from 'cookie-parser';
+import { globalErrorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
 
@@ -30,14 +31,7 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3001;
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        status: 'error',
-        message: 'Something went wrong!',
-        ...(process.env.NODE_ENV === 'development' && { error: err.message })
-    });
-});
+app.use(globalErrorHandler);
 
 connectDB();
 

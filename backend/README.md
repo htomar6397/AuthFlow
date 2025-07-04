@@ -1,407 +1,123 @@
 # AuthFlow Backend
 
-A secure authentication system with email verification, OTP-based login, and profile management built with Node.js, Express, and MongoDB.
+Developed by **Mayank Tomar**
 
-## Features
+- **LinkedIn:** [mayank-tomar-10a049233](https://www.linkedin.com/in/mayank-tomar-10a049233/)
+- **Twitter:** [@MayankToma63512](https://twitter.com/MayankToma63512)
 
-- 🔐 JWT-based authentication
-- ✉️ Email verification with OTP
-- 🔄 Refresh token rotation
-- 🛡️ Rate limiting and security middleware
-- 📝 User profile management
-- 📱 RESTful API design
+A secure and robust authentication system with email verification, OTP-based login, and profile management, built with Node.js, Express, and MongoDB.
 
-## Rate Limiting
+## System Analysis and Design
 
-The API implements per-IP rate limiting to prevent abuse and ensure fair usage. The limits are applied as follows:
+This project is a well-architected and secure authentication service. It's built with a clear separation of concerns and includes multiple layers of security, making it suitable for a production environment.
 
-| Endpoint                   | Rate Limit           | Description                                    |
-|----------------------------|----------------------|------------------------------------------------|
-| `/api/auth/register`       | 5 requests/hour      | Prevents account enumeration                   |
-| `/api/auth/login`          | 10 requests/15 min   | Protects against brute force attacks           |
-| `/api/auth/forgot-password`| 3 requests/hour      | Prevents email spam                            |
-| `/api/auth/verify-otp`     | 5 requests/15 min    | Protects against OTP brute force               |
-| `/api/auth/resend-otp`     | 3 requests/hour      | Prevents email flooding                        |
-| All other endpoints        | 100 requests/15 min  | General API rate limit                         |
+### Architectural Pattern
 
-### Rate Limit Headers
-Responses include the following headers to help clients manage rate limits:
+The application follows a classic, service-oriented architecture to ensure the codebase is modular, scalable, and easy to maintain:
 
-- `X-RateLimit-Limit`: Maximum requests allowed in the time window
-- `X-RateLimit-Remaining`: Remaining requests in the current window
-- `X-RateLimit-Reset`: Timestamp when the limit resets (UTC)
-- `Retry-After`: Seconds until the limit resets (when rate limited)
+-   **Routes (`/routes`):** Define the API endpoints and link them to the appropriate middleware and controllers.
+-   **Middleware (`/middleware`):** Handle cross-cutting concerns like authentication, rate limiting, input validation, and application-specific flow control.
+-   **Controllers (`/controller`):** Orchestrate the business logic by validating input, calling services, and formatting the final API response.
+-   **Services (`/services`):** Contain the core, reusable business logic (e.g., creating JWTs, sending emails), keeping the controllers lean.
+-   **Models (`/models`):** Define the database schemas using Mongoose, ensuring data consistency at the database level.
 
-### Rate Limit Response
-When a rate limit is exceeded, the API responds with:
+### Security Deep Dive
 
-```json
-{
-  "status": "error",
-  "message": "Too many requests, please try again later",
-  "retryAfter": 300,
-  "retryAfterFormatted": "5 minutes"
-}
-```
+Security is a core feature, with several mechanisms working in concert to protect the application and its users:
 
-### Implementation Details
-- Uses `rate-limiter-flexible` for efficient in-memory rate limiting
-- Each IP gets its own rate limit counter
-- Rate limiters are automatically cleaned up after 1 hour of inactivity
-- The system tracks both successful and failed requests
+-   **Rate Limiting & Brute-Force Protection:** The API uses `rate-limiter-flexible` to apply strict, IP-based rate limits to sensitive endpoints. This is the first line of defense against automated attacks and API abuse. The current implementation is in-memory; for a multi-server deployment, this should be migrated to a distributed store like Redis.
+
+    | Endpoint Category         | Rate Limit            | Description                                    |
+    | :------------------------ | :-------------------- | :--------------------------------------------- |
+    | General Auth (`/api/auth`)| 20 requests / 15 min  | Protects against general auth-related abuse.   |
+    | Account Creation          | 5 requests / hour     | Prevents mass account creation.                |
+    | Password Reset            | 5 requests / hour     | Prevents email spam for password resets.       |
+    | Verify OTP                | 5 requests / hour     | Protects against OTP brute-force attacks.      |
+    | Resend OTP                | 3 requests / hour     | Prevents email flooding for OTP requests.      |
+    | Username Check            | 30 requests / 1 min   | Allows for quick username availability checks. |
+    | Default (All Other APIs)  | 100 requests / 15 min | General API rate limit for authenticated users.|
+
+-   **Account Lockout:** As a secondary defense against brute-force attacks, user accounts are temporarily locked for 30 minutes after 5 consecutive failed login attempts.
+
+-   **Secure Authentication Flow:**
+    -   **JWT Strategy:** The system uses short-lived access tokens (15m) and long-lived refresh tokens (7d).
+    -   **Refresh Token Rotation:** Each time a refresh token is used, it is invalidated and a new one is issued. This helps detect token theft and enhances security.
+    -   **Secure Cookie Storage:** Refresh tokens are stored in `httpOnly` cookies, which prevents them from being accessed by client-side JavaScript and mitigates the risk of XSS attacks.
+
+-   **Data & Password Security:**
+    -   **Input Validation:** All incoming data is validated and sanitized using `express-validator` to prevent common vulnerabilities like XSS and injection attacks.
+    -   **Password Hashing:** User passwords are never stored in plaintext. They are securely hashed using `bcrypt`, the industry-standard algorithm for password storage.
+
+### Developer Experience & Robustness
+
+-   **Centralized Error Handling:** A global error handler (`globalErrorHandler`) and a custom `AppError` class ensure that all errors are handled gracefully and returned in a consistent JSON format.
+-   **Consistent API Responses:** A standardized response format for both success (`sendSuccess`) and error messages simplifies client-side integration and improves the developer experience.
+
+## API Endpoints Overview
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/auth/register` | `POST` | Creates a new user account. |
+| `/api/auth/login` | `POST` | Authenticates a user and returns a JWT. |
+| `/api/auth/verify-otp` | `POST` | Verifies a user's email with an OTP. |
+| `/api/auth/resend-otp` | `GET` | Resends the OTP to the user's email address. |
+| `/api/auth/forgot-password`| `POST` | Sends a password reset email. |
+| `/api/auth/refresh-token` | `GET` | Issues a new access token. |
+| `/api/auth/check-username`| `GET` | Checks if a username is already in use. |
+| `/api/auth/logout` | `POST` | Logs the user out. |
+| `/api/user/profile` | `GET` | Retrieves the authenticated user's profile. |
+| `/api/user/complete-profile`| `POST` | Completes the profile for a new user. |
+| `/api/user/update-profile`| `POST` | Updates the authenticated user's profile. |
+| `/api/user/change-password`| `POST` | Changes the authenticated user's password. |
+
+For a detailed guide to all API endpoints, including request formats, validation rules, and all possible success and error responses, please see the [**Full API Documentation**](./API_DOCUMENTATION.md).
 
 ## Tech Stack
 
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT + OTP
-- **Email**: MailerSend integration
-- **Security**: bcrypt, rate limiting, input validation
-
-## Project Structure
-
-```
-backend/
-├── config/           # Configuration files
-├── controller/       # Route controllers
-├── middleware/       # Custom middleware
-├── models/           # Database models
-├── routes/           # Route definitions
-├── services/         # Business logic
-└── utils/            # Utility functions
-```
-
-## API Endpoints
-
-### Authentication
-
-#### 1. Register New User
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securePassword123!"
-}
-```
-
-**Response (Success - 201 Created)**
-```json
-{
-  "status": "success",
-  "message": "Registration successful. Please verify your email.",
-  "data": {
-    "userId": "507f1f77bcf86cd799439011"
-  }
-}
-```
-
-#### 2. Login
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securePassword123!"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "507f1f77bcf86cd799439011",
-  "user": {
-    "username": "johndoe",
-    "name": "John Doe",
-    "email": "user@example.com",
-    "isEmailVerified": true
-  }
-}
-```
-
-#### 3. Check Username Availability
-```http
-GET /api/auth/check-username?username=desired_username
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "available": true,
-  "message": "Username is available"
-}
-```
-
-#### 4. Refresh Access Token
-```http
-POST /api/auth/refresh-token
-Content-Type: application/json
-
-{
-  "refreshToken": "refresh-token-here"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "accessToken": "new-access-token-here"
-}
-```
-
-#### 5. Forgot Password
-```http
-POST /api/auth/forgot-password
-Content-Type: application/json
-
-{
-  "email": "user@example.com"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "Password reset email sent"
-}
-```
-
-#### 6. Logout
-```http
-POST /api/auth/logout
-Authorization: Bearer <access-token>
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "Successfully logged out"
-}
-```
-
-#### 7. Verify OTP
-```http
-POST /api/auth/verify-otp
-Authorization: Bearer <access-token>
-Content-Type: application/json
-
-{
-  "otp": "123456"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "Email verified successfully"
-}
-```
-
-#### 8. Resend OTP
-```http
-POST /api/auth/resend-otp
-Authorization: Bearer <access-token>
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "OTP has been resent to your email"
-}
-```
-
-### User Profile
-
-#### 1. Complete Profile
-```http
-POST /api/user/complete-profile
-Authorization: Bearer <access-token>
-Content-Type: application/json
-
-{
-  "username": "johndoe",
-  "name": "John Doe",
-  "bio": "I'm a developer"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "Profile completed successfully",
-  "user": {
-    "username": "johndoe",
-    "name": "John Doe",
-    "bio": "I'm a developer"
-  }
-}
-```
-
-#### 2. Get User Profile
-```http
-GET /api/user/profile
-Authorization: Bearer <access-token>
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "data": {
-    "username": "johndoe",
-    "name": "John Doe",
-    "email": "user@example.com",
-    "bio": "I'm a developer",
-    "isEmailVerified": true,
-    "createdAt": "2023-01-01T00:00:00.000Z",
-    "updatedAt": "2023-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### 3. Update Profile
-```http
-POST /api/user/update-profile
-Authorization: Bearer <access-token>
-Content-Type: application/json
-
-{
-  "name": "John Updated",
-  "bio": "Updated bio",
-  "password": "newSecurePassword123!"
-}
-```
-
-**Response (Success - 200 OK)**
-```json
-{
-  "status": "success",
-  "message": "Profile updated successfully"
-}
-```
-
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# Server
-PORT=3000
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/authflow
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_ACCESS_EXPIRES_IN=15m
-REFRESH_EXPIRES_DAYS=7
-
-# OTP
-OTP_ATTEMPTS=3
-OTP_EXPIRY_MINUTES=10
-
-# Email
-MAILER_SEND_API_KEY=your-mailersend-api-key
-APP_NAME=AuthFlow
-```
+-   **Runtime**: Node.js
+-   **Framework**: Express.js
+-   **Database**: MongoDB with Mongoose
+-   **Authentication**: JWT + OTP
+-   **Validation**: `express-validator`
+-   **Email**: MailerSend integration
+-   **Security**: `bcrypt`, `rate-limiter-flexible`
 
 ## Installation
 
-1. Clone the repository
-   ```bash
-   git clone <repository-url>
-   cd authflow/backend
-   ```
+1.  Clone the repository
+    ```bash
+    git clone <repository-url>
+    cd authflow/backend
+    ```
 
-2. Install dependencies
-   ```bash
-   npm install
-   ```
+2.  Install dependencies
+    ```bash
+    npm install
+    ```
 
-3. Set up environment variables
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+3.  Set up environment variables
+    ```bash
+    cp .env.example .env
+    # Edit .env with your configuration
+    ```
 
-4. Start the development server
-   ```bash
-   npm run dev
-   ```
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm test` - Run tests
-- `npm run lint` - Run linter
-
-### Dependencies
-
-- express: ^4.18.2
-- mongoose: ^7.0.0
-- jsonwebtoken: ^9.0.0
-- bcryptjs: ^2.4.3
-- dotenv: ^16.0.3
-- rate-limiter-flexible: ^2.4.1
-- nodemailer: ^6.9.1
-
-## Security
-
-- Password hashing with bcrypt
-- JWT token rotation
-- Rate limiting
-- Input validation
-- Secure headers
-- CSRF protection
-
-## Error Handling
-
-All error responses follow this format:
-
-```json
-{
-  "status": "error",
-  "message": "Error description"
-}
-```
-
-### Common Error Responses
-
-| Status Code | Description                  |
-|-------------|------------------------------|
-| 400         | Bad Request                  |
-| 401         | Unauthorized                 |
-| 403         | Forbidden                    |
-| 404         | Not Found                    |
-| 429         | Too Many Requests            |
-| 500         | Internal Server Error        |
+4.  Start the development server
+    ```bash
+    npm run dev
+    ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1.  Fork the repository
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Support
 
-For support, email support@example.com or open an issue in the repository.
+For support, email htomar6397@gmail.com or open an issue in the repository.

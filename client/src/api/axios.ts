@@ -7,7 +7,7 @@ import axios, {
 import { toast } from 'sonner';
 import useAuthStore from '@/stores/authStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||'https://authflow-wwfv.onrender.com/api' || 'http://localhost:3001/api';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

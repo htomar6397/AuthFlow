@@ -1,28 +1,25 @@
 import User from "../models/User.js";
 import { sendPassChangeAlert , sendWelcomeEmail } from "../services/emailService.js";
 import { comparePassword, hashPassword } from "../utils/hashed.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { AppError } from "../middleware/errorMiddleware.js";
+import { sendSuccess } from "../utils/responseHandler.js";
 
-const completeProfile = async (req, res) => {
+const completeProfile = asyncHandler(async (req, res, next) => {
     const { username,name,bio } = req.body;
-    if (!username || !name) {
-        return res.status(400).json({ message: 'Username and name are required' });
-    }
 
     const user = await User.findOne({ email: req.user.email });
     
     user.username = username;
     user.name = name;
     if(bio) user.bio = bio;
-        try{
-        await user.save();
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({ message: 'An error occurred while updating profile' });
-    }
+    
+    await user.save();
+    
     // Send welcome email
     await sendWelcomeEmail(user.email , user.name);
 
-    res.status(200).json({ message: 'Profile completed successfully' ,
+    sendSuccess(res, {
         user : {
             username: username,
             name: name,
@@ -32,39 +29,33 @@ const completeProfile = async (req, res) => {
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         }
+    }, 'Profile completed successfully');
+});
 
-    });
-}
-
-const me = async (req, res) => {
+const me = asyncHandler(async (req, res, next) => {
     const user = await User.findOne(
         { email: req.user.email },
         'email username name bio isEmailVerified createdAt updatedAt'
     ).lean();
     if (!user) {
-        return res.status(400).json({ message: 'User not found' });
+        return next(new AppError('User not found', 400));
     }
 
-    res.status(200).json(user);
-}
+    sendSuccess(res, user);
+});
 
-const updateProfile = async (req, res) => {
+const updateProfile = asyncHandler(async (req, res, next) => {
     const { name,bio} = req.body;
     if (!name && !bio) {
-        return res.status(400).json({ message: 'name or bio is required' });
+        return next(new AppError('name or bio is required', 400));
     }
     const user = await User.findOne({ email: req.user.email });
 
     if(name) user.name = name;
     if(bio) user.bio = bio;
-    try{
-        await user.save();
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({ message: 'An error occurred while updating profile' });
-    }
+    await user.save();
 
-    res.status(200).json({ message: 'Profile updated successfully' ,
+    sendSuccess(res, {
         user : {
             username: user.username,
             name: name || user.name,
@@ -74,28 +65,19 @@ const updateProfile = async (req, res) => {
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         }
+    }, 'Profile updated successfully');
+});
 
-    });
-}
-
-const changePassword = async (req, res) => {
+const changePassword = asyncHandler(async (req, res, next) => {
     const { password,newPassword } = req.body;
-    if (!password && !newPassword) {
-        return res.status(400).json({ message: 'password or new password is required' });
-    }
     const user = await User.findOne({ email: req.user.email });
     const isMatch = await comparePassword(password,user.password);
-    if(!isMatch) return res.status(400).json({ message: 'Invalid password' });
+    if(!isMatch) return next(new AppError('Invalid password', 400));
     user.password = await hashPassword(newPassword);
-    try{
-        await user.save();
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({ message: 'An error occurred while updating password' });
-    }
+    await user.save();
     // Send password change alert
     await sendPassChangeAlert(user.name ,user.email);
-    res.status(200).json({ message: 'Password changed successfully' });
-}
+    sendSuccess(res, null, 'Password changed successfully');
+});
 
 export { completeProfile, me ,updateProfile ,changePassword };
