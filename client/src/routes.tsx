@@ -60,7 +60,6 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = React.memo(({ child
 import { AuthLayoutSplit } from '@/components/layout/AuthLayoutSplit';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import ErrorPage from './pages/ErrorPage';
-import { Toaster } from './components/ui/sonner';
 import useUserStore from './stores/userStore';
 
 // Public routes that don't require initialization
@@ -68,18 +67,9 @@ export const publicNoInitRoutes = [
   {
     path: '/oauth/callback',
     element: (
-      <>
+     
         <OAuthCallback />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            classNames: {
-              description: '!text-foreground text-sm',
-            },
-            duration: 3000,
-          }}
-        />
-      </>
+      
     ),
   },
   {

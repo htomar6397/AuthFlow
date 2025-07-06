@@ -5,7 +5,6 @@ import { MainLayout } from './components/layout/MainLayout';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { useEffect, useState } from 'react';
-import { Toaster } from './components/ui/sonner';
 import useUserStore from './stores/userStore';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/shared/Alert';
@@ -184,14 +183,6 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen w-full overflow-x-hidden">
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            classNames: {
-              description: '!text-foreground text-sm',
-            }
-          }}
-        />
         <AppContent />
       </div>
     </ThemeProvider>

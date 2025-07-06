@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import useAuthStore from '@/stores/authStore';
 import useUserStore from '@/stores/userStore';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -27,13 +26,14 @@ const OAuthCallback = () => {
 
         if (error) {
           console.error('OAuth Error:', error);
-          toast.error(`Authentication error: ${error}`);
           navigate('/login', { replace: true });
           return;
         }
 
         if (!accessToken || !userData) {
-          throw new Error('Missing authentication data from OAuth provider');
+          console.error('Missing authentication data from OAuth provider');
+          navigate('/login', { replace: true });
+          return;
         }
 
         // Parse the user data
@@ -47,20 +47,13 @@ const OAuthCallback = () => {
         localStorage.setItem('authToken', accessToken);
         
         // Show success message and redirect
-        toast.success('Successfully logged in!');
         
-        // Redirect based on user's verification status
-        if (!user.isEmailVerified) {
-          navigate('/verify-email', { replace: true });
-        } else if (!user.username) {
-          navigate('/complete-profile', { replace: true });
-        } else {
+       
           navigate('/', { replace: true });
-        }
+        
         
       } catch (error) {
         console.error('OAuth Processing Error:', error);
-        toast.error('Authentication failed. Please try logging in again.');
         navigate('/login', { replace: true });
       } finally {
         setIsProcessing(false);
