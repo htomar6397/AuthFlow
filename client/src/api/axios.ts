@@ -245,7 +245,7 @@ api.interceptors.response.use(
           // Clear authentication state directly without triggering logout
           useAuthStore.getState().clearAuth();
           
-          // Show session expired toast, but only if not on specific auth pages
+          
           const authPages = ['/login', '/register', '/forgot-password'];
           if (!authPages.some(page => window.location.pathname.includes(page))) {
             toast.error('Session Expired', {

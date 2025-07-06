@@ -65,7 +65,7 @@ import useUserStore from './stores/userStore';
 // Public routes that don't require initialization
 export const publicNoInitRoutes = [
   {
-    path: '/oauth/callback',
+    path: '/oauth-callback',
     element: (
      
         <OAuthCallback />
