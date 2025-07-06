@@ -7,7 +7,7 @@ export const userApi = {
    * Update user profile
    */
   async updateProfile(userData: UpdateProfileData): Promise<ApiResponse<User>> {
-    const response = await api.put<ApiResponse<User>>('/user/update-profile', userData);
+    const response = await api.post<ApiResponse<User>>('/user/update-profile', userData);
     return response.data;
   },
 
