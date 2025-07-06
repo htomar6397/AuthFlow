@@ -1,69 +1,124 @@
-# React + TypeScript + Vite
+# AuthFlow - Modern Authentication Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-4.4.0-646CFF?logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.0-06B6D4?logo=tailwind-css)](https://tailwindcss.com/)
 
-Currently, two official plugins are available:
+A modern, responsive authentication frontend built with React, TypeScript, and Vite. This application provides a complete authentication flow including login, registration, password reset, and email verification.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## Expanding the ESLint configuration
+- 🔐 JWT-based authentication with refresh tokens
+- 📱 Fully responsive design
+- 🎨 Themed with dark/light mode support
+- ⚡ Built with Vite for fast development and production builds
+- 🛡️ Secure authentication flow with form validation
+- 🔄 Token refresh mechanism
+- ✉️ Email verification
+- 🔄 Password reset functionality
+- 🔍 Form validation with Zod
+- 🎭 Role-based access control (RBAC)
+- 🚀 Optimized production builds
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📦 Prerequisites
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18.0.0 or higher
+- npm or yarn
+- Backend API (See [Backend Setup](#-backend-setup))
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## 🚀 Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/authflow-frontend.git
+   cd authflow-frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn
+   ```
+
+3. **Configure environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_BASE_URL=http://localhost:3000/api
+   VITE_GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id
+   VITE_APP_NAME=AuthFlow
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+5. **Build for production**
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+
+## 🏗️ Project Structure
+
+```
+src/
+├── api/               # API service layer
+├── assets/            # Static assets
+├── components/        # Reusable UI components
+│   ├── auth/         # Authentication components
+│   ├── layout/       # Layout components
+│   └── ui/           # Base UI components
+├── config/           # Application configuration
+├── contexts/         # React contexts
+├── hooks/            # Custom React hooks
+├── lib/              # Utility functions
+├── pages/            # Page components
+│   ├── auth/        # Authentication pages
+│   └── dashboard/   # Authenticated pages
+├── routes/          # Application routes
+├── stores/          # State management
+├── styles/          # Global styles
+└── types/           # TypeScript type definitions
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔧 Backend Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+This frontend requires a backend API to function. The backend should implement the following endpoints:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/refresh-token` - Refresh access token
+- `POST /auth/forgot-password` - Request password reset
+- `POST /auth/reset-password` - Reset password
+- `POST /auth/verify-email` - Verify email address
+- `GET /auth/me` - Get current user profile
+- `PUT /auth/profile` - Update user profile
+
+## 🛠️ Built With
+
+- [React](https://reactjs.org/) - JavaScript library for building user interfaces
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [Vite](https://vitejs.dev/) - Next Generation Frontend Tooling
+- [React Router](https://reactrouter.com/) - Declarative routing for React
+- [Zod](https://zod.dev/) - TypeScript-first schema validation
+- [TanStack Query](https://tanstack.com/query) - Data fetching and state management
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - Beautifully designed components
+- [React Hook Form](https://react-hook-form.com/) - Form state management
+- [Sonner](https://sonner.emilkowal.ski/) - Toast notifications
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Vite](https://vitejs.dev/) for the amazing development experience
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
+- All the amazing open-source libraries used in this project

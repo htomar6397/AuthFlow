@@ -119,7 +119,7 @@ export function RegisterPage() {
   const handleGoogleSignUp = async () => {
     try {
       setIsGoogleLoading(true);
-      window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
     } catch (error) {
       console.error('Google sign up error:', error);
       setFormError('root', { message: 'Failed to initiate Google sign up' });

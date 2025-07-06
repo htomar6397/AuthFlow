@@ -106,6 +106,12 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
     };
   }, [typingTimer]);
 
+  const handleCancel = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -118,9 +124,7 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
       setIsLoading(true);
       await updateProfile(formData);
       toast.success('Profile updated successfully');
-      if (onClose) {
-        onClose();
-      }
+      handleCancel();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
       toast.error(errorMessage);
@@ -206,15 +210,16 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={isLoading}
+            className="flex-1"
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             disabled={isLoading}
-            className="min-w-24"
+            className="flex-1"
           >
             {isLoading ? (
               <>

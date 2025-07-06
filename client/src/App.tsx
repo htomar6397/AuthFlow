@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Toaster } from './components/ui/sonner';
 import useUserStore from './stores/userStore';
 import { Button } from './components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from './components/shared/Alert';
+import { Alert, AlertDescription } from './components/shared/Alert';
 import { AlertCircle } from 'lucide-react';
 
 // Define custom error type with code property
@@ -54,24 +54,53 @@ function AppContent() {
 
   if (hasError) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-4">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Something went wrong</AlertTitle>
-            <AlertDescription className="mb-4">
-              {error?.message || 'An unexpected error occurred. Please try again.'}
-              {error?.code && ` (${error.code})`}
-            </AlertDescription>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleReset}>
-                Reload Page
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
+          <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 mt-0.5 text-destructive flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Oops! Something went wrong
+                </h3>
+                <AlertDescription className="mt-2 text-foreground/80">
+                  {error?.message || 'An unexpected error occurred. Please try again.'}
+                  {error?.code && (
+                    <span className="block mt-1 text-sm text-muted-foreground">
+                      Error code: {error.code}
+                      {error.statusCode && ` (Status: ${error.statusCode})`}
+                    </span>
+                  )}
+                </AlertDescription>
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReset}
+                    className="flex-1 min-w-[120px]"
+                  >
+                    Reload Page
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={() => navigate('/')}
+                    className="flex-1 min-w-[120px]"
+                  >
+                    Go to Home
+                  </Button>
+                </div>
+              </div>
             </div>
           </Alert>
+          {process.env.NODE_ENV === 'development' && error?.stack && (
+            <details className="mt-4 p-3 bg-muted/50 rounded-md text-sm overflow-auto max-h-60">
+              <summary className="font-medium cursor-pointer text-muted-foreground">
+                Error details
+              </summary>
+              <pre className="mt-2 p-2 bg-background rounded text-xs overflow-auto">
+                {error.stack}
+              </pre>
+            </details>
+          )}
         </div>
       </div>
     );
@@ -85,9 +114,11 @@ function AppContent() {
         setHasError(true);
       }}
     >
-      <MainLayout showHeader={true}>
-        {element}
-      </MainLayout>
+      <div className="min-h-screen bg-background text-foreground">
+        <MainLayout showHeader={true}>
+          {element}
+        </MainLayout>
+      </div>
     </ErrorBoundary>
   );
 }

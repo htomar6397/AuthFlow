@@ -81,7 +81,7 @@ export function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
     } catch (error) {
       console.error('Google login error:', error);
       setFormError('root', { message: 'Failed to initiate Google login' });

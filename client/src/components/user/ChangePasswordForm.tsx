@@ -37,6 +37,12 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
 
   // Removed isFormValid check to always enable the button and show inline errors
 
+  const handleCancel = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,12 +55,10 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
       setIsLoading(true);
       await changePassword(currentPassword, newPassword);
       form.reset();
-      if (onClose) {
-        onClose();
-      }
+      handleCancel();
     } catch (error) {
       console.error('Failed to change password:', error);
-      } finally {
+    } finally {
       setIsLoading(false);
     }
   };
@@ -161,9 +165,9 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={isLoading}
-            className="cursor-pointer flex-1"
+            className="flex-1"
           >
             Cancel
           </Button>
