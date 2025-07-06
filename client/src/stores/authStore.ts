@@ -51,7 +51,7 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
           error: null
         });
         
-        toast.success('Login successful');
+       if(user.isEmailVerified) toast.success('Login successful');
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 
@@ -77,7 +77,6 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
           error: null
         });
         
-        toast.success('Registration successful');
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 

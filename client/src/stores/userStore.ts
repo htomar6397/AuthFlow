@@ -80,7 +80,7 @@ const useUserStore = create<UserState>((set) => ({
     try {
       const response = await userApi.completeProfile(userData);
       set({ user: response.data, isLoading: false });
-      toast.success('Profile completed successfully');
+      toast.success('Registration completed successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to complete profile';
       set({ error: errorMessage });
