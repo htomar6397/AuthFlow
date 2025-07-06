@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export function CompleteProfile() {
+export function CompleteProfilePage() {
+  const { user, completeProfile, checkUsernameAvailability } = useAuthStore();
   const [formData, setFormData] = useState({
-    name: '',
+    name: user?.name || '',
     username: '',
     bio: '',
   });
@@ -17,8 +18,7 @@ export function CompleteProfile() {
   const [isChecking, setIsChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, completeProfile, checkUsernameAvailability } = useAuthStore();
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   console.log(user)
   // Debounce username availability check
   useEffect(() => {
@@ -32,7 +32,7 @@ export function CompleteProfile() {
       try {
         const available = await checkUsernameAvailability(formData.username);
         setUsernameAvailable(available);
-        
+        console.log(available)
         if (!available) {
           setErrors(prev => ({
             ...prev,
@@ -110,9 +110,8 @@ export function CompleteProfile() {
         username: formData.username,
         bio: formData?.bio 
       });
-      
-      // Redirect to home after successful profile completion
-      navigate('/');
+      navigate('/')
+
     } catch (error) {
       console.error('Error completing profile:', error);
       setErrors({
@@ -124,21 +123,14 @@ export function CompleteProfile() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-        <p className="text-muted-foreground">Tell us a bit more about yourself</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
         {errors.submit && (
           <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
             {errors.submit}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-
+      
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -154,7 +146,7 @@ export function CompleteProfile() {
               <p className="text-sm text-destructive">{errors.name}</p>
             )}
           </div>
-        </div>
+        
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -223,6 +215,5 @@ export function CompleteProfile() {
           )}
         </Button>
       </form>
-    </div>
   );
 }

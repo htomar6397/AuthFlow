@@ -1,40 +1,142 @@
+import type { LoginCredentials, RegisterCredentials } from '@/types';
 import api from './axios';
-import type { LoginCredentials, RegisterCredentials, AuthResponse } from '@/types';
 
-export const authApi = {
-  // Login user
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login', credentials);
+// Types for auth responses
+export interface UserData {
+  id: string;
+  email: string;
+  username?: string;
+  isEmailVerified: boolean;
+  name?: string;
+  bio?: string;
+  profilePicture?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthResponse {
+  status: 'success' | 'fail' | 'error';
+  message: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    user: UserData;
+    expiresIn: number;
+  };
+  errors?: Array<{
+    type: string;
+    msg: string;
+    path: string;
+    location: string;
+  }>;
+}
+
+export interface ApiResponse<T = unknown> {
+  status: 'success' | 'fail' | 'error';
+  message: string;
+  data?: T;
+  errors?: Array<{
+    type: string;
+    msg: string;
+    path: string;
+    location: string;
+  }>;
+}
+
+interface BaseResponse {
+  status: 'success' | 'fail' | 'error';
+  message: string;
+  data?: unknown;
+  success?: boolean; // For backward compatibility
+}
+
+export interface VerifyEmailResponse extends BaseResponse {
+  verified: boolean;
+  data?: {
+    verified: boolean;
+  };
+}
+
+class AuthApi {
+  /**
+   * Authenticate a user with email/username and password
+   */
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>(
+      `/auth/login`,
+      credentials
+    );
     return response.data;
-  },
+  }
 
-  // Register new user  
-  register: async (userData: RegisterCredentials): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', userData);
+  /**
+   * Register a new user account
+   */
+  async register(userData: RegisterCredentials): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>(
+      `/auth/register`,
+      userData
+    );
     return response.data;
-  },
+  }
 
-  // Verify email with OTP
-  verifyEmail: async (code: string): Promise<{ success: boolean }> => {
-    const response = await api.post<{ success: boolean }>('/auth/verify-otp', { otp: code });
+  /**
+   * Verify email with OTP code
+   */
+  async verifyEmail(code: string): Promise<VerifyEmailResponse> {
+    const response = await api.post<VerifyEmailResponse>(
+      `/auth/verify-email`,
+      { code }
+    );
     return response.data;
-  },
+  }
 
-  // Resend verification email
-  resendVerificationEmail: async (): Promise<{ success: boolean }> => {
-    const response = await api.get<{ success: boolean }>('/auth/resend-otp');
+  /**
+   * Resend verification email
+   */
+  async resendVerificationEmail(): Promise<BaseResponse> {
+    const response = await api.post<BaseResponse>(
+      `/auth/resend-verification`
+    );
     return response.data;
-  },
+  }
 
-  // Request password reset
-  forgotPassword: async (identifier: string): Promise<{ success: boolean }> => {
-    const response = await api.post<{ success: boolean }>('/auth/forgot-password', { identifier });
+  /**
+   * Request password reset
+   */
+  async forgotPassword(identifier: string): Promise<BaseResponse> {
+    const response = await api.post<BaseResponse>(
+      `/auth/forgot-password`,
+      { identifier }
+    );
     return response.data;
-  },
-  // Logout user
-  logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
-  },
-};
+  }
 
+  /**
+   * Logout the current user
+   */
+  async logout(): Promise<BaseResponse> {
+    const response = await api.post<BaseResponse>(
+      `/auth/logout`
+    );
+    return response.data;
+  }
+  /**
+   * Refresh access token
+   */
+  async refreshToken(): Promise<{ accessToken: string; expiresIn: number }> {
+    const response = await api.post<{
+      status: 'success';
+      data: {
+        accessToken: string;
+        expiresIn: number;
+      };
+    }>(`/auth/refresh-token`);
+    return response.data.data;
+  }
+
+
+}
+
+export const authApi = new AuthApi();
 export default authApi;

@@ -1,12 +1,34 @@
+
+// Define types for the API responses
+export interface ApiResponse<T = unknown> {
+  status: 'success' | 'fail' | 'error';
+  message: string;
+  data?: T;
+  errors?: Array<{
+    type: string;
+    msg: string;
+    path: string;
+    location: string;
+  }>;
+}
+
+export type UpdateProfileData = Partial<{
+  name: string;
+  username: string;
+  bio: string;
+}>;
+
+// This is what you should use as the return type for your API calls
+export type ApiPromise<T = unknown> = Promise<ApiResponse<T>>;
+
 export interface User {
-  id: string;
   email: string;
-  name?: string;
-  username?: string;
-  bio?: string;
   isEmailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  name?: string;
+  bio?: string;
+  username?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
@@ -38,12 +60,4 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
-  logout: () => Promise<void>;
-  verifyEmail: (code: string) => Promise<boolean>;
-  resendVerificationEmail: (email: string) => Promise<boolean>;
-  forgotPassword: (email: string) => Promise<boolean>;
-  clearError: () => void;
-}
+

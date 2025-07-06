@@ -9,6 +9,9 @@ package-lock.json
 
 # Build
 build
+.serverless
+undefined
+
 
 
 # Environment

@@ -1,17 +1,16 @@
 // src/routes.tsx
 import React, { lazy, Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import useAuthStore from '@/stores/authStore';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
+
 // Lazy-loaded pages
-const LoginForm = lazy(() => import('@/components/auth/LoginForm').then(m => ({ default: m.LoginForm })));
-const RegisterForm = lazy(() => import('@/components/auth/RegisterForm').then(m => ({ default: m.RegisterForm })));
-const VerifyEmail = lazy(() => import('@/components/auth/verify-otp-form').then(m => ({ default: m.VerifyOtpForm })));
-const CompleteProfile = lazy(() => import('@/components/auth/CompleteProfile').then(m => ({ default: m.CompleteProfile })));
-const ForgotPassword = lazy(() => import('@/components/auth/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
-const ResetPassword = lazy(() => import('@/components/user/ResetPassword').then(m => ({ default: m.ResetPassword })));
-const Home = lazy(() => import('@/components/user/Home').then(m => ({ default: m.Home })));
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })));
+const CompleteProfilePage = lazy(() => import('@/pages/auth/CompleteProfilePage').then(m => ({ default: m.CompleteProfilePage })));
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const HomePage = lazy(() => import('@/pages/user/HomePage').then(m => ({ default: m.default })));
 
 // Suspense fallback wrapper
 const withSuspense = (Component: React.ReactNode) => (
@@ -21,7 +20,7 @@ const withSuspense = (Component: React.ReactNode) => (
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
   const location = useLocation();
-  const { user } = useAuthStore();
+  const { user } = useUserStore();
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -39,7 +38,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = React.memo(({ ch
 
 // Public route wrapper
 const PublicRoute: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
-  const { user } = useAuthStore();
+  const { user } = useUserStore();
    const location = useLocation();
    
   // If user is logged in, redirect based on their status
@@ -57,27 +56,68 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = React.memo(({ child
   return <>{children}</>;
 });
 
-// Memoize the auth layout to prevent unnecessary re-renders
-const MemoizedAuthLayout = React.memo(({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4 w-full">
-    <div className="w-full max-w-md">{children}</div>
-  </div>
-));
+// Import the AuthLayout component from its new location
+import { AuthLayoutSplit } from '@/components/layout/AuthLayoutSplit';
+import OAuthCallback from './pages/auth/OAuthCallback';
+import ErrorPage from './pages/ErrorPage';
+import { Toaster } from './components/ui/sonner';
+import useUserStore from './stores/userStore';
 
-// Auth page layout (kept for backward compatibility)
-const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <MemoizedAuthLayout>{children}</MemoizedAuthLayout>
-);
+// Public routes that don't require initialization
+export const publicNoInitRoutes = [
+  {
+    path: '/oauth/callback',
+    element: (
+      // We're not using withSuspense here to prevent double wrapping
+      <>
+      <OAuthCallback />
+      <Toaster 
+      position="top-right"
+      toastOptions={{
+        classNames: {
+          description: '!text-foreground text-sm',
+        }
+      }}
+      />
+      </>
+    ),
+  },
+  {
+    path: '/docs',
+    element: withSuspense(
+      <PublicRoute>
+        <div className="prose max-w-4xl mx-auto p-8">
+          <h1>API Documentation</h1>
+          <p>Documentation for the AuthFlow API will be available here.</p>
+        </div>
+      </PublicRoute>
+    ),
+  },
+  {
+    path: '/health',
+    element: withSuspense(
+      <PublicRoute>
+        <div className="p-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">Service Status</h1>
+          <p className="text-green-600">✓ Service is operational</p>
+        </div>
+      </PublicRoute>
+    ),
+  },
+];
 
-// Route definitions
+// Public routes that require initialization
 export const publicRoutes = [
   {
     path: '/login',
     element: withSuspense(
       <PublicRoute>
-        <AuthLayout>
-          <LoginForm />
-        </AuthLayout>
+        <AuthLayoutSplit
+          title="Login to your account"
+          description="Enter your email below to login to your account"
+        >
+          <LoginPage />
+        </AuthLayoutSplit>
       </PublicRoute>
     ),
   },
@@ -85,9 +125,13 @@ export const publicRoutes = [
     path: '/register',
     element: withSuspense(
       <PublicRoute>
-        <AuthLayout>
-          <RegisterForm />
-        </AuthLayout>
+        <AuthLayoutSplit
+          title="Create an account"
+          description="Enter your details to get started"
+          showBackButton={true}
+        >
+          <RegisterPage />
+        </AuthLayoutSplit>
       </PublicRoute>
     ),
   },
@@ -95,12 +139,15 @@ export const publicRoutes = [
     path: '/forgot-password',
     element: withSuspense(
       <PublicRoute>
-        <AuthLayout>
-          <ForgotPassword />
-        </AuthLayout>
+        <AuthLayoutSplit title="Forgot Password" description="Enter your email below to reset your password"
+        showBackButton={true}
+        >
+          <ForgotPasswordPage />
+        </AuthLayoutSplit>
       </PublicRoute>
     ),
   }
+  
 ];
 
 export const protectedRoutes = [
@@ -108,7 +155,7 @@ export const protectedRoutes = [
     path: '/',
     element: withSuspense(
       <ProtectedRoute>
-        <Home />
+        <HomePage />
       </ProtectedRoute>
     ),
   },
@@ -116,9 +163,9 @@ export const protectedRoutes = [
     path: '/verify-email',
     element: withSuspense(
       <ProtectedRoute>
-        <AuthLayout>
-          <VerifyEmail />
-        </AuthLayout>
+        <AuthLayoutSplit title="Verify your email" description="We've sent a verification code to your email." showBackButton={true} backButtonAction="logout">
+          <VerifyEmailPage />
+        </AuthLayoutSplit>
       </ProtectedRoute>
     ),
   },
@@ -126,26 +173,18 @@ export const protectedRoutes = [
     path: '/complete-profile',
     element: withSuspense(
       <ProtectedRoute>
-        <AuthLayout>
-          <CompleteProfile />
-        </AuthLayout>
+        <AuthLayoutSplit title="Complete Your Profile" description="Tell us a bit more about yourself." showBackButton={true} backButtonAction="logout">
+          <CompleteProfilePage />
+        </AuthLayoutSplit>
       </ProtectedRoute>
     ),
   },
-  {
-    path: '/reset-password',
-    element: withSuspense(
-      <ProtectedRoute>
-        <AuthLayout>
-          <ResetPassword />
-        </AuthLayout>
-      </ProtectedRoute>
-    ),
-  },
+ 
 ];
 
 export const routes = [
+  ...publicNoInitRoutes,
   ...publicRoutes,
   ...protectedRoutes,
-  { path: '*', element: <Navigate to="/" replace /> },
+  { path: '*', element: <ErrorPage /> },
 ];

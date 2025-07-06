@@ -1,233 +1,233 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/auth';
-import type { User, LoginCredentials, RegisterCredentials, CompleteProfileData } from '@/types';
-import userApi from '@/api/user';
+import type { LoginCredentials, RegisterCredentials } from '@/types';
+import { toast } from 'sonner';
+import useUserStore from './userStore';
 
-type AuthState = {
-  user: User | null;
+export interface ApiError {
+  status: 'error' | 'fail';
+  message: string;
+  code?: string;
+  statusCode?: number;
+  [key: string]: unknown;
+}
+
+interface AuthState {
   token: string | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
-  error: string | null;
-};
+  error: ApiError | null;
+  isAuthenticated: boolean;
+}
 
-type AuthActions = {
-  initialize: () => Promise<User | null>;
-  login: (userData: LoginCredentials) => Promise<void>;
-  register: (userData: RegisterCredentials) => Promise<void>;
-  verifyEmail: (otp: string) => Promise<void>;
-  logout: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<void>;
+interface AuthActions {
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
+  verifyEmail: (otp: string) => Promise<boolean>;
   resendVerificationEmail: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
   clearError: () => void;
-  completeProfile: (userData: CompleteProfileData) => Promise<void>;
-  checkUsernameAvailability: (username: string) => Promise<boolean>;
-  updateProfile: (userData: any) => Promise<void>;
-  changePassword: (password: string , newPassword: string) => Promise<void>;
-};
+  clearAuth: () => void;
+  setToken: (token: string | null) => void;
+  setError: (error: ApiError | null) => void;
+}
 
 const useAuthStore = create<AuthState & AuthActions>((set) => ({
   // Initial state
-  user: null,
   token: null,
-  isAuthenticated: false,
   isLoading: false,
   error: null,
+  isAuthenticated: false,
 
-  // Actions
-  initialize: async () => {
+  // Login user
+  login: async (credentials) => {
+    set({ isLoading: true, error: null });
     try {
-      // Use the existing API to get the current user
-      const user = await userApi.getMe();
-      set({
-        user: user,
-        isAuthenticated: !!user,
-        isLoading: false,
-      });
-      return user;
+      const response = await authApi.login(credentials);
+      
+      if (response.status === 'success' && response.data) {
+        const { user, accessToken } = response.data;
+        useUserStore.setState({ user });        
+        set({ 
+          token: accessToken,
+          isLoading: false,
+          error: null
+        });
+        
+        toast.success('Login successful');
+      } else {
+        throw new Error(response.message || 'Login failed');
+      }
     } catch (error) {
-      // If we get an error, the user is not authenticated
+      const errorObj = error as ApiError;
       set({ 
-        user: null,
-        isAuthenticated: false,
+        token: null,
         isLoading: false,
+        isAuthenticated: false,
+        error: errorObj
       });
       throw error;
     }
   },
-  
-  login: async (userData: LoginCredentials) => {
+
+  // Register new user
+  register: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authApi.login(userData);
-      set({
-        user: response.user,
-        token: response.accessToken,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const response = await authApi.register(credentials);
+      
+      if (response.status === 'success' && response.data) {
+        const { user, accessToken } = response.data;
+        useUserStore.setState({ user });        
+        set({ 
+          token: accessToken,
+          isLoading: false,
+          error: null
+        });
+        
+        toast.success('Registration successful');
+      } else {
+        throw new Error(response.message || 'Registration failed');
+      }
+    } catch (error) {
+      const errorObj = error as ApiError;
       set({ 
-        error: errorMessage,
-        isLoading: false 
+        token: null,
+        isLoading: false,
+        isAuthenticated: false,
+        error: errorObj
       });
-      throw new Error(errorMessage);
+      throw error;
     }
   },
 
-  register: async (userData: RegisterCredentials) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authApi.register(userData);
-      set({
-        user: response.user,
-        token: response.accessToken,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
-
-  verifyEmail: async (otp: string) => {
+  // Verify email with OTP
+  verifyEmail: async (otp) => {
     set({ isLoading: true, error: null });
     try {
       await authApi.verifyEmail(otp);
-      set((state) => ({
-        user: state.user ? { ...state.user, isEmailVerified: true } : null,
-        isAuthenticated: true,
-        isLoading: false,
-      }));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Verification failed';
+      const user = useUserStore.getState().user;
+      if (user) {
+        user.isEmailVerified = true;
+        useUserStore.setState({ user });
+      }
+      set({ isLoading: false });
+      toast.success('Email verified successfully');
+      return true;
+    } catch (error) {
+      const errorObj = error as ApiError;
       set({ 
-        error: errorMessage,
-        isLoading: false 
+        isLoading: false,
+        error: errorObj
       });
-      throw new Error(errorMessage);
+      throw error;
     }
   },
 
+  // Resend verification email
   resendVerificationEmail: async () => {
     set({ isLoading: true, error: null });
+    
     try {
-      await authApi.resendVerificationEmail();
-      set({ isLoading: false });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Resend verification failed';
+      const response = await authApi.resendVerificationEmail();
+      
+      if (response.status === 'success') {
+        set({ isLoading: false });
+        toast.success('Verification OTP sent');
+        return;
+      } else {
+        throw new Error(response.message || 'Failed to resend verification email');
+      }
+    } catch (error) {
+      const errorObj = error as ApiError;
       set({ 
-        error: errorMessage,
-        isLoading: false 
+        isLoading: false,
+        error: errorObj
       });
-      throw new Error(errorMessage);
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 
+  // Forgot password
+  forgotPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authApi.forgotPassword(email);
+      
+      if (response.status === 'success') {
+        set({ isLoading: false });
+        toast.success('Temporary password sent', {
+          description: 'Please check your email (spam/junk folder) for temporary password'
+        });
+        return;
+      } else {
+        throw new Error(response.message || 'Failed to send password reset email');
+      }
+    } catch (error) {
+      const errorObj = error as ApiError;
+      set({ 
+        isLoading: false,
+        error: errorObj
+      });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Logout user
   logout: async () => {
+    set({ isLoading: true, error: null });
     try {
       await authApi.logout();
-    } finally {
-      set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
+      
+      // Clear auth state
+      set({ 
+        token: null, 
         isLoading: false,
+        error: null
       });
+      
+      // Clear user store
+      useUserStore.getState().clearUser();
+      
+      toast.success('Logged out successfully');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      const errorObj = error as ApiError;
+      set({ 
+        isLoading: false,
+        error: errorObj
+      });
+      throw error;
     }
   },
 
-  completeProfile: async (userData: CompleteProfileData) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await userApi.completeProfile(userData);
-      const updatedUser = { ...response.user, isProfileCompleted: true };
-      set({
-        user: updatedUser,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Profile completion failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
-
-  checkUsernameAvailability: async (username: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await userApi.checkUsername(username);
-      return response.available;
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Username availability check failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
-
-  changePassword: async (password: string , newPassword: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      await userApi.changePassword(password , newPassword);
-      set({
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Profile completion failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
-  updateProfile: async (userData: any) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await userApi.updateProfile(userData);
-      const updatedUser = response.user;
-      set({
-        user: updatedUser,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Profile completion failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
-
-  forgotPassword: async (indentify: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      await authApi.forgotPassword(indentify);
-      set({ isLoading: false });
-    } catch (error: any) {
-      console.log(error)
-      const errorMessage = error.message || 'Forgot password failed';
-      set({ 
-        error: errorMessage,
-        isLoading: false 
-      });
-      throw new Error(errorMessage);
-    }
-  },
+  // Clear error message
   clearError: () => set({ error: null }),
+  
+  // Clear authentication state
+  clearAuth: () => {
+    set({ 
+      token: null,
+      error: null,
+      isLoading: false
+    });
+    
+    // Clear user store
+    useUserStore.getState().clearUser();
+  },
+  
+  // Set authentication token
+  setToken: (token: string | null) => set({ 
+    token,
+  }),
+  
+  // Set error state
+  setError: (error: ApiError | null) => set({ error }),
 }));
 
 export default useAuthStore;
