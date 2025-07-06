@@ -1,0 +1,54 @@
+service: authflow-backend
+frameworkVersion: '4'
+
+# Add this section
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1 # You can change your desired AWS region
+  stage: dev
+  memorySize: 512  # Increased from 128MB to 512MB
+  timeout: 30      # Keep timeout at 30 seconds for now, adjust if needed
+  environment:
+    MONGODB_URI: "${env:MONGODB_URI}"
+    JWT_SECRET: "${env:JWT_SECRET}"
+    JWT_ACCESS_EXPIRES_IN: "${env:JWT_ACCESS_EXPIRES_IN}"
+    JWT_ISSUER: "${env:JWT_ISSUER}"
+    REFRESH_EXPIRES_DAYS: "${env:REFRESH_EXPIRES_DAYS}"
+    EMAIL_HOST: "${env:EMAIL_HOST}"
+    EMAIL_PORT: "${env:EMAIL_PORT}"
+    EMAIL_USERNAME: "${env:EMAIL_USERNAME}"
+    EMAIL_PASSWORD: "${env:EMAIL_PASSWORD}"
+    EMAIL_FROM: "${env:EMAIL_FROM}"
+    APP_NAME: "${env:APP_NAME}"
+    FRONTEND_URL: "${env:FRONTEND_URL}"
+    NODE_ENV: "${env:NODE_ENV}"
+    ACCOUNT_LOCKOUT_ATTEMPTS: "${env:ACCOUNT_LOCKOUT_ATTEMPTS}"
+    ACCOUNT_LOCKOUT_TIME: "${env:ACCOUNT_LOCKOUT_TIME}"
+    OTP_ATTEMPTS: "${env:OTP_ATTEMPTS}"
+    OTP_EXPIRY_MINUTES: "${env:OTP_EXPIRY_MINUTES}"
+    RATE_LIMIT_MAX_REQUESTS: "${env:RATE_LIMIT_MAX_REQUESTS}"
+    RATE_LIMIT_WINDOW_MS: "${env:RATE_LIMIT_WINDOW_MS}"
+    GOOGLE_CLIENT_ID: "${env:GOOGLE_CLIENT_ID}"
+    GOOGLE_CLIENT_SECRET: "${env:GOOGLE_CLIENT_SECRET}"
+    GOOGLE_CALLBACK_URL: "${env:GOOGLE_CALLBACK_URL}"
+    REDIS_URL: "${env:REDIS_URL}"
+
+plugins:
+  - serverless-offline
+ 
+
+functions:
+  api:
+    handler: server.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: any
+          cors: true
+      - http:
+          path: /
+          method: any
+          cors: true
