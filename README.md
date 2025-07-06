@@ -27,6 +27,7 @@ A secure authentication system built with the MERN stack (MongoDB, Express, Reac
 - ⚡ Fast loading with Vite
 - 🔄 State management with Zustand
 - 📝 Form handling with React Hook Form
+- 📝 Form validation with Zod
 - 🔐 Protected routes and authentication flow
 - 🌐 Google OAuth integration
 
