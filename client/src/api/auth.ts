@@ -85,7 +85,7 @@ class AuthApi {
    */
   async verifyEmail(code: string): Promise<VerifyEmailResponse> {
     const response = await api.post<VerifyEmailResponse>(
-      `/auth/verify-email`,
+      `/auth/verify-otp`,
       { code }
     );
     return response.data;
@@ -96,7 +96,7 @@ class AuthApi {
    */
   async resendVerificationEmail(): Promise<BaseResponse> {
     const response = await api.post<BaseResponse>(
-      `/auth/resend-verification`
+      `/auth/resend-otp`
     );
     return response.data;
   }
@@ -121,19 +121,7 @@ class AuthApi {
     );
     return response.data;
   }
-  /**
-   * Refresh access token
-   */
-  async refreshToken(): Promise<{ accessToken: string; expiresIn: number }> {
-    const response = await api.post<{
-      status: 'success';
-      data: {
-        accessToken: string;
-        expiresIn: number;
-      };
-    }>(`/auth/refresh-token`);
-    return response.data.data;
-  }
+
 
 
 }
