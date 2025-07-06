@@ -41,7 +41,7 @@ export interface ApiResponse<T = unknown> {
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
   ? String(import.meta.env.VITE_API_BASE_URL) 
-  : 'http://localhost:3000/dev/api';
+  : 'https://ocvlqcxq6j.execute-api.us-east-1.amazonaws.com/dev/api';
 
 // Create a custom type that includes our custom response interceptors
 export interface CustomAxiosInstance extends AxiosInstance {
@@ -110,48 +110,100 @@ interface ApiErrorResponse {
 }
 
 const handleApiError = (error: unknown) => {
-  const axiosError = error as AxiosError<ApiErrorResponse>;
-  
-  // Handle network errors
-  if (!axiosError.response) {
-    const errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-    toast.error('Network Error', {
+  // Default error message
+  let errorMessage = 'An unexpected error occurred';
+  let errorCode = 'UNKNOWN_ERROR';
+  let statusCode = 500;
+  let validationErrors: Array<{ msg: string; field?: string }> = [];
+  let isNetworkError = false;
+  let isCorsError = false;
+
+  if (axios.isAxiosError(error)) {
+    const response = error.response?.data as ApiErrorResponse;
+    
+    // Handle network errors (no response from server)
+    if (error.code === 'ERR_NETWORK') {
+      errorMessage = 'Unable to connect to the server. Please check your internet connection or try again later.';
+      errorCode = 'NETWORK_ERROR';
+      statusCode = 0;
+      isNetworkError = true;
+    } 
+    // Handle CORS errors
+    else if (error.code === 'ERR_CORS' || 
+             (error.response && error.response.status === 0 && !window.navigator.onLine)) {
+      errorMessage = 'Unable to connect to the server. Please check your network connection and ensure the backend is running.';
+      errorCode = 'CORS_ERROR';
+      statusCode = 0;
+      isCorsError = true;
+    } 
+    // Handle HTTP errors
+    else if (error.response) {
+      statusCode = error.response.status;
+      
+      // Handle different status codes
+      switch (statusCode) {
+        case 400:
+          errorMessage = response?.message || 'Bad request';
+          errorCode = response?.code || 'BAD_REQUEST';
+          validationErrors = (response?.errors || []).map(err => ({
+            msg: err.msg,
+            field: String(err.path || '')
+          }));
+          break;
+        case 401:
+          // Don't show toast here, it's handled by the interceptor
+          return Promise.reject(error);
+        case 403:
+          errorMessage = 'You do not have permission to access this resource';
+          errorCode = 'FORBIDDEN';
+          break;
+        case 404:
+          errorMessage = 'The requested resource was not found';
+          errorCode = 'NOT_FOUND';
+          break;
+        case 500:
+          errorMessage = response?.message || 'An internal server error occurred. Our team has been notified.';
+          errorCode = 'INTERNAL_SERVER_ERROR';
+          break;
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'The server is currently unavailable. Please try again later.';
+          errorCode = 'SERVICE_UNAVAILABLE';
+          isNetworkError = true;
+          break;
+        default:
+          errorMessage = response?.message || error.message;
+          errorCode = response?.code || 'UNKNOWN_ERROR';
+      }
+    }
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+
+  // Show error toast for client-side errors (4xx) and server errors (5xx)
+  // But skip for network/CORS errors as they'll be handled by the global error boundary
+  if (statusCode >= 400 && !isNetworkError && !isCorsError) {
+    toast.error('Error', {
       description: errorMessage,
     });
-    return Promise.reject({
-      status: 'error',
-      message: errorMessage,
-      code: 'NETWORK_ERROR',
-    });
   }
 
-  const { status, data } = axiosError.response;
-  let errorMessage = data?.message || 'An unexpected error occurred';
-  console.log(errorMessage);
-  const errorDetails: Record<string, unknown> = { ...data };
-  
-  // Handle validation errors (400 with errors array)
-  if (status === 400 && data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-    const firstError = data.errors[0];
-    errorMessage = typeof firstError === 'object' && firstError !== null && 'msg' in firstError
-      ? String(firstError.msg)
-      : 'Please check your input and try again.';
-  }
-  
-  // Skip showing toast for 401 errors as they're handled by the interceptor
-  if (status !== 401) {
-    toast.error('Error', { description: errorMessage });
+  // For network/CORS errors, we'll let the error boundary handle it
+  if (isNetworkError || isCorsError) {
+    const networkError = new Error(errorMessage) as Error & { code?: string; statusCode?: number };
+    networkError.code = errorCode;
+    networkError.statusCode = statusCode;
+    return Promise.reject(networkError);
   }
 
-  const errorResponse = {
-    status: (status >= 500 ? 'error' : 'fail') as 'error' | 'fail',
+  return Promise.reject({
+    status: 'error',
     message: errorMessage,
-    code: data?.code || `HTTP_${status}`,
-    statusCode: status,
-    ...errorDetails,
-  };
-
-  return Promise.reject(errorResponse);
+    code: errorCode,
+    statusCode,
+    errors: validationErrors.length > 0 ? validationErrors : undefined,
+  });
 };
 
 /**
