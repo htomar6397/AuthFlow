@@ -95,7 +95,7 @@ class AuthApi {
    * Resend verification email
    */
   async resendVerificationEmail(): Promise<BaseResponse> {
-    const response = await api.post<BaseResponse>(
+    const response = await api.get<BaseResponse>(
       `/auth/resend-otp`
     );
     return response.data;
