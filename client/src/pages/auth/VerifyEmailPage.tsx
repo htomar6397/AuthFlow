@@ -84,7 +84,7 @@ export function VerifyEmailPage() {
           type="button"
           onClick={handleResendCode}
           disabled={remainingTime > 0}
-          className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
         >
           {remainingTime > 0
             ? `Resend code in ${remainingTime}s`
