@@ -113,40 +113,54 @@ AuthFlow/
 
 ### Backend (`.env` in `server/`)
 ```env
+# Application
+APP_NAME=your_app_name_here # Used in email templates
+FRONTEND_URL=http://localhost:5173 # Used for CORS origin
+
 # Server Configuration
-NODE_ENV=development
-PORT=3000
+PORT=your_port_here
+NODE_ENV=development # Used for secure cookies and error stack traces
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/authflow
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key_here
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_ISSUER=your_jwt_issuer_here
+REFRESH_EXPIRES_DAYS=your_refresh_expires_days_here
 
-# JWT
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+# Resend SMTP Configuration
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=465
+EMAIL_USERNAME=your_email_here
+EMAIL_PASSWORD=your_email_password_here
+EMAIL_FROM="your_email_here"
 
-# Email (for OTP and password reset)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your_email@example.com
-SMTP_PASS=your_email_password
-SMTP_FROM=no-reply@authflow.com
+# MongoDB Configuration
+MONGODB_URI=your_mongodb_uri_here
 
-# Frontend URL for CORS
-FRONTEND_URL=http://localhost:5173
+# Redis Configuration
+REDIS_URL=your_redis_url_here
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=15*60*1000  # 15 minutes
+RATE_LIMIT_MAX_REQUESTS=100      # Max requests per window
+
+
+# Security
+ACCOUNT_LOCKOUT_ATTEMPTS=5
+ACCOUNT_LOCKOUT_TIME=30          # minutes
+OTP_EXPIRY_MINUTES=10
+OTP_ATTEMPTS=3
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_CALLBACK_URL=http://localhost:your_port_here/dev/api/auth/google/callback
 ```
 
 ### Frontend (`.env` in `client/`)
 ```env
 # API Configuration
 VITE_API_BASE_URL=http://localhost:3000/api
-
-# Google OAuth
-VITE_GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id
-
-# App Configuration
-VITE_APP_NAME=AuthFlow
 ```
 
 ## 📚 Documentation
