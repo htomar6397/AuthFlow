@@ -83,10 +83,10 @@ class AuthApi {
   /**
    * Verify email with OTP code
    */
-  async verifyEmail(code: string): Promise<VerifyEmailResponse> {
+  async verifyEmail(otp: string): Promise<VerifyEmailResponse> {
     const response = await api.post<VerifyEmailResponse>(
       `/auth/verify-otp`,
-      { code }
+      { otp }
     );
     return response.data;
   }
