@@ -162,7 +162,7 @@ function App() {
   if (!isInitialized && !isNoInitRoute) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <LoadingSpinner />
+        <LoadingSpinner className="h-screen" />
       </div>
     );
   }

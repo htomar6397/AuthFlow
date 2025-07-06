@@ -68,17 +68,17 @@ export const publicNoInitRoutes = [
   {
     path: '/oauth/callback',
     element: (
-      // We're not using withSuspense here to prevent double wrapping
       <>
-      <OAuthCallback />
-      <Toaster 
-      position="top-right"
-      toastOptions={{
-        classNames: {
-          description: '!text-foreground text-sm',
-        }
-      }}
-      />
+        <OAuthCallback />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              description: '!text-foreground text-sm',
+            },
+            duration: 3000,
+          }}
+        />
       </>
     ),
   },
