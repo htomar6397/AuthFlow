@@ -17,9 +17,10 @@ passport.use(googleStrategy);
 
 const app: Application = express();
 
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || '*',
     credentials: true,
   })
 );
@@ -41,7 +42,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
-if (process.env.NODE_ENV === 'production') app.use(applyRateLimit);
+// if (process.env.NODE_ENV === 'production')
+   app.use(applyRateLimit);
 
 // API Routes
 app.use('/api/auth', authRoutes);

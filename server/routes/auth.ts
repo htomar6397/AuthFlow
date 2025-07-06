@@ -18,6 +18,7 @@ import {
   loginValidation,
   forgotPasswordValidation,
   verifyOtpValidation,
+  usernameValidation,
 } from '../utils/validation';
 
 const router: Router = express.Router();
@@ -41,7 +42,7 @@ router.get(
 router.post('/login', loginValidation, handleValidationErrors, login);
 router.post('/register', registerValidation, handleValidationErrors, register);
 // Check username availability route
-router.get('/check-username', checkUsernameAvailability);
+router.get('/check-username', usernameValidation, handleValidationErrors, checkUsernameAvailability);
 router.get('/refresh-token', refreshAccessToken);
 router.post('/forgot-password', forgotPasswordValidation, handleValidationErrors, forgotPassword);
 

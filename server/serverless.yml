@@ -47,8 +47,20 @@ functions:
       - http:
           path: /{proxy+}
           method: any
-          cors: true
+          cors:
+            origin: ${env:FRONTEND_URL, '*'}
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Requested-With
+            allowCredentials: true
       - http:
           path: /
           method: any
-          cors: true
+          cors:
+            origin: ${env:FRONTEND_URL, '*'}
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Requested-With
+            allowCredentials: true

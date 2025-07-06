@@ -28,13 +28,10 @@ const checkEmailVerification = (req: CustomRequest, res: Response, next: NextFun
  */
 const checkCompleteProfile = (req: CustomRequest, res: Response, next: NextFunction): void => {
   const user = req.user;
-  console.log(user);
 
-  if (!user || !user.email) {
-    return next(new AppError('User not authenticated or email not found.', 401));
-  }
 
-  if (!user.username) {
+
+  if (!user?.username) {
     next(new AppError('Profile incomplete. Please complete your profile to continue.', 403));
     return;
   }
@@ -64,28 +61,10 @@ const checkUsernameAvailability = async (
     } else if (req.params?.username) {
       username = req.params.username;
     }
+   
 
-    // Validate input
-    if (!username) {
-      res.status(400).json({
-        status: 'error',
-        message: 'Username is required.',
-      });
-      return;
-    }
-
-    const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
-    if (!usernameRegex.test(username)) {
-      res.status(400).json({
-        status: 'error',
-        message:
-          'Username must be 3–30 characters long and can only contain letters, numbers, and underscores.',
-      });
-      return;
-    }
-
+    const existingUser: IUser | null = await User.findOne({ username });
     if (!fromBody) {
-      const existingUser: IUser | null = await User.findOne({ username });
 
       res.status(200).json({
         status: existingUser ? 'error' : 'success',
@@ -94,6 +73,10 @@ const checkUsernameAvailability = async (
         },
         message: existingUser ? 'Username is already taken.' : 'Username is available.',
       });
+      return;
+    }
+    if(existingUser){
+      next(new AppError('Username is already taken.', 400));
       return;
     }
 

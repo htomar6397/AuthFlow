@@ -363,7 +363,7 @@ const googleAuthCallback = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/oauth/callback?error=Google authentication failed`
+        `${process.env.FRONTEND_URL}/oauth-callback?error=Google authentication failed`
       );
     }
 
@@ -374,7 +374,7 @@ const googleAuthCallback = async (req: Request, res: Response) => {
     sendCookie(res, refreshToken);
 
     // Redirect to frontend with access token and user data
-    const redirectUrl = new URL(`${process.env.FRONTEND_URL}/oauth/callback`);
+    const redirectUrl = new URL(`${process.env.FRONTEND_URL}/oauth-callback`);
     redirectUrl.searchParams.set('access_token', accessToken);
     redirectUrl.searchParams.set(
       'user',
@@ -396,7 +396,7 @@ const googleAuthCallback = async (req: Request, res: Response) => {
     return res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error('Google OAuth error:', error);
-    return res.redirect(`${process.env.FRONTEND_URL}/oauth/callback?error=Authentication failed`);
+    return res.redirect(`${process.env.FRONTEND_URL}/oauth-callback?error=Authentication failed`);
   }
 };
 

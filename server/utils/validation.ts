@@ -33,3 +33,4 @@ export const forgotPasswordValidation: ValidationChain[] = [
 export const verifyOtpValidation: ValidationChain[] = [otp];
 export const completeProfileValidation: ValidationChain[] = [username, name];
 export const changePasswordValidation: ValidationChain[] = [password, newPassword];
+export const usernameValidation: ValidationChain[] = [username];

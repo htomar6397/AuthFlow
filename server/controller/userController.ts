@@ -5,6 +5,7 @@ import { comparePassword, hashPassword } from '../utils/hashed';
 import asyncHandler from '../utils/asyncHandler';
 import AppError from '../middleware/AppError';
 import { sendSuccess } from '../utils/responseHandler';
+import { deleteCookie } from '../services/cookieService';
 
 interface CustomRequest extends Request {
   user?: {
@@ -19,17 +20,21 @@ interface CustomRequest extends Request {
 const completeProfile = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
     const { username, name, bio }: { username?: string; name?: string; bio?: string } = req.body;
-
+    
     const user: IUser | null = await User.findOne({ email: req.user?.email });
-
+   
     if (!user) {
       next(new AppError('User not found', 404));
       return;
     }
+    if(user.username){
+      next(new AppError('profile is already completed', 400));
+      return;
+    }
 
-    if (username) user.username = username;
-    if (name) user.name = name;
-    if (bio) user.bio = bio;
+    user.username = username;
+    user.name = name || 'User';
+    if(bio) user.bio = bio;
 
     await user.save();
 
@@ -74,6 +79,23 @@ const updateProfile = asyncHandler(
     const { name, bio, username }: { name?: string; bio?: string; username?: string } = req.body;
     if (!name && !bio && !username) {
       next(new AppError('name or bio or username is required', 400));
+      return;
+    }
+    if (username && username.length < 3) {
+      next(new AppError('Username must be at least 3 characters long', 400));
+      return;
+    }
+    if (username && username.length > 30) {
+      next(new AppError('Username must be at most 30 characters long', 400));
+      return;
+    }
+    if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+      next(new AppError('Username can only contain letters, numbers, and underscores', 400));
+      return;
+    }
+    const isUsernameTaken = await User.findOne({ username });
+    if (isUsernameTaken) {
+      next(new AppError('Username is already taken', 400));
       return;
     }
 
@@ -193,11 +215,7 @@ const deleteAccount = asyncHandler(
     await User.deleteOne({ _id: user?.id });
 
     // Clear the refresh token cookie if it exists
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+    deleteCookie(res);
 
     // Send success response
     sendSuccess(res, null, 'Account deleted successfully');

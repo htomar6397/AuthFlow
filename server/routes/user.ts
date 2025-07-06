@@ -29,7 +29,7 @@ router.post(
   completeProfile
 );
 router.use(checkCompleteProfile);
-router.post('/update-profile', checkUsernameAvailability, updateProfile);
+router.post('/update-profile', updateProfile);
 router.post('/change-password', changePasswordValidation, handleValidationErrors, changePassword);
 
 // Delete account route
