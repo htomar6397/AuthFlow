@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, Mail, User, Key, UserCog, AlertTriangle } from 'lucide-react';
-import useAuthStore from '@/stores/authStore';
 import useUserStore from '@/stores/userStore';
 import { Button } from '@/components/ui/button';
 
@@ -24,7 +23,6 @@ import { ChangePasswordForm } from '@/components/user/ChangePasswordForm';
 function DeleteAccountDialog() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { logout } = useAuthStore();
   const { deleteAccount } = useUserStore();
 
   const handleDeleteAccount = async (e: React.FormEvent) => {
@@ -37,7 +35,6 @@ function DeleteAccountDialog() {
     try {
       setIsLoading(true);
       await deleteAccount(password);
-      await logout();
     } catch (error) {
       console.error('Failed to delete account:', error);
    } finally {
