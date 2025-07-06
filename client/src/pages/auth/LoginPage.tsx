@@ -47,7 +47,7 @@ export function LoginPage() {
    */
   useEffect(() => {
     if (authError) {
-      setFormError('root', { message: authError }); // Set local error to display in the form
+      setFormError('root', { message: authError.message }); // Set local error to display in the form
       clearError(); // Clear the error from the global store
     }
   }, [authError, clearError, setFormError]); // Dependencies: re-run effect if authError or clearError changes

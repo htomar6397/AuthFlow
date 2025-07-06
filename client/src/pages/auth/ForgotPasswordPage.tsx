@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores';
-import { toast } from 'sonner';
 
 export function ForgotPasswordPage() {
   const [identifier, setIdentifier] = useState('');
@@ -14,8 +13,7 @@ export function ForgotPasswordPage() {
 
   useEffect(() => {
     if (authError) {
-      toast.error(authError);
-      setError(authError);
+      setError(authError.message);
     }
   }, [authError]);
 
@@ -32,22 +30,9 @@ export function ForgotPasswordPage() {
     try {
       await forgotPassword(identifier);
       setIsSubmitted(true);
-      toast.success('Temporary password sent', {
-        description: (
-          <div className="space-y-1">
-            <p>We've sent a temporary password to your email.</p>
-            <p className="text-xs text-destructive font-medium">
-              Can't find it? Please check your spam or junk folder.
-            </p>
-          </div>
-        ),
-      });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send temporary password';
       setError(errorMessage);
-      toast.error('Error', {
-        description: errorMessage,
-      });
       console.error('Forgot password error:', err);
     }
   };

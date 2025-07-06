@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import useAuthStore from '@/stores/authStore';
+import useUserStore from '@/stores/userStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function CompleteProfilePage() {
-  const { user, completeProfile, checkUsernameAvailability } = useAuthStore();
+  const { user, completeProfile, checkUsername: checkUsernameAvailability } = useUserStore();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     username: '',

@@ -1,18 +1,14 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { OTPInput } from "@/components/ui/otp-input"
 import useAuthStore from "@/stores/authStore"
-import { toast } from "sonner"
 
 export function VerifyEmailPage() {
   const [otp, setOtp] = useState("")
   const [isVerifying, setIsVerifying] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
-  const navigate = useNavigate()
-  const { user, verifyEmail, resendVerificationEmail } = useAuthStore()
-  console.log(user)
+  const { verifyEmail, resendVerificationEmail } = useAuthStore()
   // Handle countdown timer for resend button
   useEffect(() => {
     if (remainingTime > 0) {
@@ -28,21 +24,7 @@ export function VerifyEmailPage() {
     try {
       await resendVerificationEmail()
       setRemainingTime(60)
-      toast.success("Verification code sent", {
-        description: (
-          <div className="space-y-1">
-            <p>A new verification code has been sent to {user?.email}</p>
-            <p className="text-xs text-destructive font-medium">
-              Can't find the email? Please check your spam or junk folder.
-            </p>
-          </div>
-        ),
-      })
-    } catch {
-      toast.error("Failed to resend code", {
-        description: "Please check your connection and try again."
-      })
-    }
+    } catch { /* empty */ }
   }
 
   const handleVerify = async (otpCode: string) => {
@@ -53,19 +35,7 @@ export function VerifyEmailPage() {
     try {
       setIsVerifying(true)
       
-      const promise = verifyEmail(otpCode)
-      
-      toast.promise(promise, {
-        loading: 'Verifying your email...',
-        success: () => {
-          navigate('/complete-profile')
-          return 'Email verified! Redirecting to complete your profile...'
-        },
-        error: (err) => {
-          const message = err.message || "Invalid or expired verification code"
-          return message
-        },
-      })
+      const promise = verifyEmail(otpCode);
       
       await promise
     } finally {

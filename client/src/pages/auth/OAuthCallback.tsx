@@ -9,15 +9,6 @@ const OAuthCallback = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(true);
   
-  useEffect(() => {
-    // This is a workaround to ensure the component is mounted before showing toasts
-    const timer = setTimeout(() => {
-      toast.dismiss();
-      toast('Processing OAuth callback...');
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const processOAuth = async () => {

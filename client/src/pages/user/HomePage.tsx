@@ -38,7 +38,6 @@ function DeleteAccountDialog() {
       setIsLoading(true);
       await deleteAccount(password);
       await logout();
-      toast.success('Your account has been deleted successfully');
     } catch (error) {
       console.error('Failed to delete account:', error);
    } finally {

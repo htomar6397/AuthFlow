@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { User, CompleteProfileData, UpdateProfileData } from '@/types';
 import userApi from '@/api/user';
-import useAuthStore from './authStore';
+import useAuthStore, { type ApiError } from './authStore';
 import { toast } from 'sonner';
 
 interface UserState {
@@ -11,6 +11,7 @@ interface UserState {
   updateUser: (user: Partial<User>) => void;
   clearUser: () => void;
   updateProfile: (userData: UpdateProfileData) => Promise<void>;
+  checkUsername: (username : string) => Promise<boolean>;
   completeProfile: (userData: CompleteProfileData) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
@@ -58,8 +59,23 @@ const useUserStore = create<UserState>((set) => ({
       set({ isLoading: false });
     }
   },
-
-  completeProfile: async (userData) => {
+  
+  checkUsername: async (username : string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await userApi.checkUsername(username);
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      const errorObj = error as ApiError;
+      set({ 
+        isLoading: false,
+        error: errorObj.message
+      });
+      throw error;
+    }
+  },
+  completeProfile:  async (userData) => {
     set({ isLoading: true, error: null });
     try {
       const response = await userApi.completeProfile(userData);

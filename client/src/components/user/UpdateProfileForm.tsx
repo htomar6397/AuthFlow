@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuthStore } from '@/stores';
+import useUserStore from '@/stores/userStore';
 import { toast } from 'sonner';
 import { Loader2, Check, X } from 'lucide-react';
 import { updateProfileSchema, type UpdateProfileFormData } from '@/lib/validations';
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
+
 interface UpdateProfileFormProps {
   initialData: {
     name: string;
@@ -27,7 +28,8 @@ interface UpdateProfileFormProps {
 }
 
 export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormProps) {
-  const { updateProfile, checkUsernameAvailability, user } = useAuthStore();
+  const { updateProfile,checkUsername, user } = useUserStore();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -82,7 +84,7 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
       }
 
       try {
-        const available = await checkUsernameAvailability(value);
+        const available = await checkUsername(value);
         setUsernameAvailable(available);
       } catch (error) {
         console.error('Error checking username:', error);

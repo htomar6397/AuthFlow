@@ -16,7 +16,6 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: ApiError | null;
-  isAuthenticated: boolean;
 }
 
 interface AuthActions {
@@ -37,7 +36,6 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
   token: null,
   isLoading: false,
   error: null,
-  isAuthenticated: false,
 
   // Login user
   login: async (credentials) => {
@@ -45,8 +43,7 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
     try {
       const response = await authApi.login(credentials);
       
-      if (response.status === 'success' && response.data) {
-        const { user, accessToken } = response.data;
+      const { user, accessToken } = response.data;
         useUserStore.setState({ user });        
         set({ 
           token: accessToken,
@@ -55,15 +52,11 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
         });
         
         toast.success('Login successful');
-      } else {
-        throw new Error(response.message || 'Login failed');
-      }
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 
         token: null,
         isLoading: false,
-        isAuthenticated: false,
         error: errorObj
       });
       throw error;
@@ -76,8 +69,7 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
     try {
       const response = await authApi.register(credentials);
       
-      if (response.status === 'success' && response.data) {
-        const { user, accessToken } = response.data;
+      const { user, accessToken } = response.data;
         useUserStore.setState({ user });        
         set({ 
           token: accessToken,
@@ -86,15 +78,11 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
         });
         
         toast.success('Registration successful');
-      } else {
-        throw new Error(response.message || 'Registration failed');
-      }
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 
         token: null,
         isLoading: false,
-        isAuthenticated: false,
         error: errorObj
       });
       throw error;
@@ -129,15 +117,11 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const response = await authApi.resendVerificationEmail();
+       await authApi.resendVerificationEmail();
       
-      if (response.status === 'success') {
-        set({ isLoading: false });
-        toast.success('Verification OTP sent');
-        return;
-      } else {
-        throw new Error(response.message || 'Failed to resend verification email');
-      }
+      set({ isLoading: false });
+      toast.success('Verification OTP sent');
+      return;
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 
@@ -154,17 +138,13 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
   forgotPassword: async (email) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authApi.forgotPassword(email);
+      await authApi.forgotPassword(email);
       
-      if (response.status === 'success') {
-        set({ isLoading: false });
-        toast.success('Temporary password sent', {
-          description: 'Please check your email (spam/junk folder) for temporary password'
-        });
-        return;
-      } else {
-        throw new Error(response.message || 'Failed to send password reset email');
-      }
+      set({ isLoading: false });
+      toast.success('Temporary password sent', {
+        description: 'Please check your email (spam/junk folder) for temporary password'
+      });
+      return;
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 
@@ -205,6 +185,7 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
       throw error;
     }
   },
+ 
 
   // Clear error message
   clearError: () => set({ error: null }),
