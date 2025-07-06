@@ -9,6 +9,8 @@ export function VerifyEmailPage() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
   const { verifyEmail, resendVerificationEmail } = useAuthStore()
+  const [error, setError] = useState<string | null>(null);
+
   // Handle countdown timer for resend button
   useEffect(() => {
     if (remainingTime > 0) {
@@ -32,16 +34,24 @@ export function VerifyEmailPage() {
       return
     }
 
-    try {
-      setIsVerifying(true)
-      
-      const promise = verifyEmail(otpCode);
-      
-      await promise
-    } finally {
-      setIsVerifying(false)
+    
+  try {
+    setError(null);
+    setIsVerifying(true);
+    await verifyEmail(otpCode);
+    // Success is handled by the authStore's verifyEmail function
+  } catch (error: unknown) {
+    // Handle API validation errors
+    if (error instanceof Error) {
+      setError(error.message);
+    } else {
+      setError('Failed to verify OTP. Please try again.');
     }
+  } finally {
+    setIsVerifying(false);
   }
+};
+  
 
   // Show loading state while verifying
   if (isVerifying) {
@@ -78,7 +88,11 @@ export function VerifyEmailPage() {
           'Verify Email'
         )}
       </Button>
-
+      {error && (
+        <div className="text-sm text-destructive text-center mb-4">
+          {error}
+        </div>
+      )}
       <div className="space-y-3 text-center">
         <button
           type="button"

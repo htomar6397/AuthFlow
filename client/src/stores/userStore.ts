@@ -63,9 +63,9 @@ const useUserStore = create<UserState>((set) => ({
   checkUsername: async (username : string) => {
     set({ isLoading: true, error: null });
     try {
-      await userApi.checkUsername(username);
+      const response = await userApi.checkUsername(username);
       set({ isLoading: false });
-      return true;
+      return response.data?.available || false;
     } catch (error) {
       const errorObj = error as ApiError;
       set({ 

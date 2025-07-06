@@ -32,7 +32,6 @@ export function CompleteProfilePage() {
       try {
         const available = await checkUsernameAvailability(formData.username);
         setUsernameAvailable(available);
-        console.log(available)
         if (!available) {
           setErrors(prev => ({
             ...prev,
