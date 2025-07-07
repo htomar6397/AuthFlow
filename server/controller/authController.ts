@@ -274,7 +274,7 @@ const forgotPassword = asyncHandler(
       return;
     }
 
-    if (user.email === 'testUser1@gmail.com') {
+    if (user.email === 'testuser1@gmail.com') {
       next(new AppError('Test User cannot reset password', 400));
       return;
     }

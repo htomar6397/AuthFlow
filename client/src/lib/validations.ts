@@ -43,7 +43,9 @@ export const updateProfileSchema = z.object({
 
 // Password change validation
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, { message: 'Current password is required' }),
+  currentPassword: z.string()
+    .min(1, { message: 'Current password is required' })
+    .min(8, { message: 'Current password must be at least 8 characters' }),
   newPassword: z.string()
     .min(8, { message: 'Password must be at least 8 characters' })
     .regex(/[a-z]/, { message: 'Must contain at least one lowercase letter' })

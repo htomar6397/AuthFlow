@@ -31,7 +31,7 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       identifier: 'testUser1@gmail.com',
-      password: 'testUser1@'
+      password: 'testUser1@1'
     }
   });
 
@@ -47,7 +47,10 @@ export function LoginPage() {
    */
   useEffect(() => {
     if (authError) {
-      setFormError('root', { message: authError.message }); // Set local error to display in the form
+      setFormError('root', { 
+        type: 'manual',
+        message: authError?.message ?? 'An unknown error occurred' 
+      }); // Set local error to display in the form
       clearError(); // Clear the error from the global store
     }
   }, [authError, clearError, setFormError]); // Dependencies: re-run effect if authError or clearError changes

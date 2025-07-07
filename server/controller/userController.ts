@@ -151,7 +151,7 @@ const changePassword = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
     const { password, newPassword }: { password: string; newPassword: string } = req.body;
 
-    if (req.user.email === 'testUser1@gmail.com') {
+    if (req.user.email === 'testuser1@gmail.com') {
       next(new AppError('Test user cannot change password', 400));
       return;
     }
@@ -196,7 +196,7 @@ const deleteAccount = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
     const password = req.body.password;
 
-    if (req.user.email === 'testUser1@gmail.com') {
+    if (req.user.email === 'testuser1@gmail.com') {
       next(new AppError('Test user cannot delete account', 400));
       return;
     }

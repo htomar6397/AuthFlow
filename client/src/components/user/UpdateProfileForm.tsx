@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useUserStore from '@/stores/userStore';
-import { toast } from 'sonner';
 import { Loader2, Check, X } from 'lucide-react';
 import { updateProfileSchema, type UpdateProfileFormData } from '@/lib/validations';
 import {
@@ -45,7 +44,7 @@ export function UpdateProfileForm({ initialData }: UpdateProfileFormProps) {
   });
   
   // Track initial values for comparison
-  const [initialValues] = useState<UpdateProfileFormData>({
+  const [initialValues, setInitialValues] = useState<UpdateProfileFormData>({
     name: initialData.name,
     username: initialData.username,
     bio: initialData.bio || '',
@@ -116,12 +115,19 @@ export function UpdateProfileForm({ initialData }: UpdateProfileFormProps) {
 
  
 
-  // Check if there are any changes from initial values
+  // Check if there are any changes from initial values and if username is available when changed
   const currentValues = form.watch();
+  const usernameChanged = currentValues.username !== initialValues.username;
   const hasChanges = 
     currentValues.name !== initialValues.name ||
-    currentValues.username !== initialValues.username ||
+    usernameChanged ||
     currentValues.bio !== initialValues.bio;
+    
+  // Check if submit should be disabled
+  const isSubmitDisabled = 
+    !hasChanges || 
+    isLoading || 
+    (usernameChanged && usernameAvailable !== true && currentValues.username !== user?.username);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -136,13 +142,20 @@ export function UpdateProfileForm({ initialData }: UpdateProfileFormProps) {
     if (formData.username !== initialValues.username) changes.username = formData.username;
     if (formData.bio !== initialValues.bio) changes.bio = formData.bio;
     
+    // If no changes, don't submit
+    if (Object.keys(changes).length === 0) return;
+    
+    // If username is changed and not available, don't submit
+    if (changes.username && usernameAvailable === false) return;
+    
     try {
       setIsLoading(true);
       await updateProfile(changes);
-      form.reset(form.getValues()); // Reset dirty state after successful update
+      // Update initialValues with the new values
+      setInitialValues(formData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
-      toast.error(errorMessage);
+      console.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -234,15 +247,17 @@ export function UpdateProfileForm({ initialData }: UpdateProfileFormProps) {
           </DialogClose>
           <Button 
             type="submit" 
-            disabled={isLoading || !hasChanges}
-            className="flex-1"
+            className="flex-1" 
+            disabled={isSubmitDisabled}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Updating...
               </>
-            ) : 'Update Profile'}
+            ) : (
+              'Update Profile'
+            )}
           </Button>
          
         </div>
