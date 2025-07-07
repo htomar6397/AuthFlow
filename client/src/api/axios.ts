@@ -41,7 +41,7 @@ export interface ApiResponse<T = unknown> {
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
   ? String(import.meta.env.VITE_API_BASE_URL) 
-  : 'https://ocvlqcxq6j.execute-api.us-east-1.amazonaws.com/dev/api';
+  : 'http://localhost:5000/api';
 
 // Create a custom type that includes our custom response interceptors
 export interface CustomAxiosInstance extends AxiosInstance {

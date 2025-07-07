@@ -91,7 +91,7 @@ const [isLoggingOut, setIsLoggingOut] = useState(false);
                     <div className="flex items-start">
                       <span className="text-primary mr-2">•</span>
                       <div>
-                        <div className="text-base text-foreground/90">JWT Authentication</div>
+                        <div className="text-base font-medium text-foreground/90">JWT Authentication</div>
                         <div className="text-muted-foreground/50 text-[13px] leading-tight">Secure token-based auth with HTTP-only cookies</div>
                       </div>
                     </div>
@@ -165,12 +165,12 @@ const [isLoggingOut, setIsLoggingOut] = useState(false);
                       <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-[13px] text-muted-foreground/80">5/hour</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-base text-foreground/90">Rate limiting</span>
+                      <span className="text-base text-foreground/90">Verify otp requests</span>
                       <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-[13px] text-muted-foreground/80">5/hour</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-base text-foreground/90">Secure password hashing</span>
-                      <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-[13px] text-muted-foreground/80">3/hour</span>
+                      <span className="text-base text-foreground/90">Resend otp requests</span>
+                      <span className="font-mono bg-muted/50 px-2 py-0.5 rounded text-[13px] text-muted-foreground/80">5/hour</span>
                     </div>
                     <div className="pt-2 mt-3 border-t border-muted/30 text-[12px] text-muted-foreground/50">
                       Check <code className="bg-muted/30 px-1 rounded">X-RateLimit-*</code> headers for current usage
@@ -214,5 +214,4 @@ const [isLoggingOut, setIsLoggingOut] = useState(false);
     </div>
   );
 };
-
 

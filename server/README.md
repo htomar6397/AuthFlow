@@ -4,14 +4,15 @@ A secure and robust authentication system with email verification, OTP-based log
 
 ## Features
 
-- 🔐 JWT-based authentication with access & refresh tokens
+- 🔐 JWT-based authentication with access token & refresh tokens (cookies)
 - ✉️ Email verification with OTP
 - 🔄 Password reset functionality
 - 🔑 Google OAuth 2.0 integration
 - 🛡️ Rate limiting and brute-force protection
 - 📝 User profile management
 - 🔄 Token rotation and revocation
-- 🚀 Serverless deployment ready
+- 🚀 Redis for caching
+- 🚀 Serverless deployment ready (ex. AWS Lambda and API Gateway)
 
 ## Tech Stack
 
@@ -22,7 +23,6 @@ A secure and robust authentication system with email verification, OTP-based log
 - **Email:** Nodemailer
 - **Rate Limiting:** rate-limiter-flexible
 - **Caching:** Redis
-- **API Documentation:** OpenAPI (Swagger)
 - **Linting & Formatting:** ESLint, Prettier
 - **Testing:** Jest, Supertest
 
@@ -56,6 +56,13 @@ A secure and robust authentication system with email verification, OTP-based log
    npm run dev
    ```
    The server will start at `http://localhost:5000`
+
+   or want serverless 
+
+   ```bash
+   npm run offline
+   ```
+   The server will start at `http://localhost:3000/dev`
 
 ## Environment Variables
 
@@ -128,68 +135,6 @@ Authorization: Bearer <access_token>
 
 ## Deployment
 
-### Prerequisites
-
-- AWS CLI configured with appropriate credentials
-- Serverless Framework installed globally
-
-### Steps
-
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Deploy to AWS Lambda:
-   ```bash
-   npm run deploy:prod  
-   ```
-
-## Security Best Practices
-
-- Always use HTTPS in production
-- Keep your dependencies up to date
-- Use strong, unique secrets for JWT and other sensitive data
-- Implement proper CORS policies
-- Use environment variables for all sensitive configuration
-- Regularly rotate your secrets and keys
-
-## Troubleshooting
-
-- **MongoDB connection issues**: Ensure MongoDB is running and the connection string is correct
-- **Email delivery problems**: Check your SMTP credentials and ensure your email service allows less secure apps
-- **Rate limiting**: If you hit rate limits, adjust the rate limiting configuration in `.env`
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Express.js](https://expressjs.com/)
-- [MongoDB](https://www.mongodb.com/)
-- [Mongoose](https://mongoosejs.com/)
-- [JWT](https://jwt.io/)
-- [Nodemailer](https://nodemailer.com/about/)
-
-## Contact
-
-Developed by **Mayank Tomar**
-
-- **LinkedIn:** [mayank-tomar-10a049233](https://www.linkedin.com/in/mayank-tomar-10a049233/)
-- **Twitter:** [@MayankToma63512](https://twitter.com/MayankToma63512)
-
----
-
 ## System Analysis and Design
 
 This project is a well-architected and secure authentication service. It's built with a clear separation of concerns and includes multiple layers of security, making it suitable for a production environment.
@@ -255,65 +200,75 @@ Security is a core feature, with several mechanisms working in concert to protec
 
 For a detailed guide to all API endpoints, including request formats, validation rules, and all possible success and error responses, please see the [**Full API Documentation**](./API_DOCUMENTATION.md).
 
-## Tech Stack
 
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT + OTP
-- **Validation**: `express-validator`
-- **Email**: MailerSend integration
-- **Security**: `bcrypt`, `rate-limiter-flexible`
 
-## Installation
+### Prerequisites
 
-1.  Clone the repository
+- AWS CLI configured with appropriate credentials
+- Serverless Framework installed globally
 
-    ```bash
-    git clone <repository-url>
-    cd authflow/backend
-    ```
+### Steps
 
-2.  Install dependencies
+1. Install dependencies:
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
-3.  Set up environment variables
 
-    ```bash
-    cp .env.example .env
-    # Edit .env with your configuration
-    ```
+2. Deploy to AWS Lambda:
+   development
+   ```bash
+   npm run deploy
+   ```
+   or
 
-4.  Start the development server
+   production
+   ```bash
+   npm run deploy:prod  
+   ```
 
-    ```bash
-    npm run dev
-    ```
-    or
-    ```bash
-    serverless offline start
-    ```   
+## Security Best Practices
 
-5.  Deploy the application
-    ```bash
-    npm run deploy:prod
-    ```
+- Always use HTTPS in production
+- Keep your dependencies up to date
+- Use strong, unique secrets for JWT and other sensitive data
+- Implement proper CORS policies
+- Use environment variables for all sensitive configuration
+- Regularly rotate your secrets and keys
+
+## Troubleshooting
+
+- **MongoDB connection issues**: Ensure MongoDB is running and the connection string is correct
+- **Email delivery problems**: Check your SMTP credentials and ensure your email service allows less secure apps
+- **Rate limiting**: If you hit rate limits, adjust the rate limiting configuration in `.env`
 
 ## Contributing
 
-1.  Fork the repository
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## Acknowledgments
 
-For support, email htomar6397@gmail.com or open an issue in the repository.
+- [Express.js](https://expressjs.com/)
+- [MongoDB](https://www.mongodb.com/)
+- [Mongoose](https://mongoosejs.com/)
+- [JWT](https://jwt.io/)
+- [Nodemailer](https://nodemailer.com/about/)
+
+## Contact
+
+Developed by **Mayank Tomar**
+
+- **LinkedIn:** [mayank-tomar-10a049233](https://www.linkedin.com/in/mayank-tomar-10a049233/)
+- **Twitter:** [@MayankToma63512](https://twitter.com/MayankToma63512)
+
+---
+

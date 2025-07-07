@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { DialogClose } from '@radix-ui/react-dialog';
 
 
 interface UpdateProfileFormProps {
@@ -24,10 +25,9 @@ interface UpdateProfileFormProps {
     username: string;
     bio?: string;
   };
-  onClose: () => void;
 }
 
-export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormProps) {
+export function UpdateProfileForm({ initialData }: UpdateProfileFormProps) {
   const { updateProfile,checkUsername, user } = useUserStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +41,14 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
       username: initialData.username,
       bio: initialData.bio || '',
     },
+    mode: 'onChange',
+  });
+  
+  // Track initial values for comparison
+  const [initialValues] = useState<UpdateProfileFormData>({
+    name: initialData.name,
+    username: initialData.username,
+    bio: initialData.bio || '',
   });
 
   const currentUsername = form.watch('username');
@@ -106,12 +114,14 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
     };
   }, [typingTimer]);
 
-  const handleCancel = () => {
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-  };
+ 
 
+  // Check if there are any changes from initial values
+  const currentValues = form.watch();
+  const hasChanges = 
+    currentValues.name !== initialValues.name ||
+    currentValues.username !== initialValues.username ||
+    currentValues.bio !== initialValues.bio;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -119,12 +129,17 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
     if (!result) return;
     
     const formData = form.getValues();
+    const changes: Partial<UpdateProfileFormData> = {};
+    
+    // Only include changed fields
+    if (formData.name !== initialValues.name) changes.name = formData.name;
+    if (formData.username !== initialValues.username) changes.username = formData.username;
+    if (formData.bio !== initialValues.bio) changes.bio = formData.bio;
     
     try {
       setIsLoading(true);
-      await updateProfile(formData);
-      toast.success('Profile updated successfully');
-      handleCancel();
+      await updateProfile(changes);
+      form.reset(form.getValues()); // Reset dirty state after successful update
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
       toast.error(errorMessage);
@@ -207,18 +222,19 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
         </div>
         
         <div className="flex justify-end space-x-3">
+          <DialogClose asChild>
           <Button
             type="button"
             variant="outline"
-            onClick={handleCancel}
             disabled={isLoading}
             className="flex-1"
           >
             Cancel
           </Button>
+          </DialogClose>
           <Button 
             type="submit" 
-            disabled={isLoading}
+            disabled={isLoading || !hasChanges}
             className="flex-1"
           >
             {isLoading ? (
@@ -228,6 +244,7 @@ export function UpdateProfileForm({ initialData, onClose }: UpdateProfileFormPro
               </>
             ) : 'Update Profile'}
           </Button>
+         
         </div>
       </form>
     </Form>

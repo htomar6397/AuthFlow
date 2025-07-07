@@ -11,25 +11,31 @@ A secure authentication system built with the MERN stack (MongoDB, Express, Reac
 
 ## 🌟 Features
 
-### Backend
-- 🛡️ JWT-based authentication with access & refresh tokens
-- 🔄 Token refresh mechanism
-- ✉️ Email verification with OTP
-- 🔄 Password reset functionality
-- 🔒 Security middleware for protected routes
-- 🚀 RESTful API design
-- 📝 Comprehensive API documentation (see [API Documentation](server/API_DOCUMENTATION.md))
-- 🛠️ Serverless deployment ready
+- **Authentication**
+  - 🛡️ JWT-based authentication with access & refresh tokens
+  - 🔄 Token refresh mechanism
+  - ✉️ Email verification with OTP
+  - 🔄 Password reset functionality
+  - 🌐 Google OAuth integration
 
-### Frontend
-- 📱 Responsive design with mobile support
-- 🎨 Clean and modern UI components
-- ⚡ Fast loading with Vite
-- 🔄 State management with Zustand
-- 📝 Form handling with React Hook Form
-- 📝 Form validation with Zod
-- 🔐 Protected routes and authentication flow
-- 🌐 Google OAuth integration
+- **Security**
+  - 🔒 Security middleware for protected routes
+  - 🛡️ Rate limiting and request validation
+  - 🔐 Secure token handling with HTTP-only cookies
+
+- **Frontend**
+  - 📱 Responsive design with mobile support
+  - 🎨 Clean and modern UI components
+  - ⚡ Fast loading with Vite
+  - 🔄 State management with Zustand
+  - 📝 Form handling with React Hook Form & Zod validation
+  - 🔐 Protected routes and authentication flow
+
+- **Backend**
+  - 🚀 RESTful API design
+  - 📝 Comprehensive API documentation
+  - 🛠️ Serverless deployment ready
+  - 🧪 Unit and integration testing
 
 ## 🏗️ Project Structure
 
@@ -94,7 +100,7 @@ AuthFlow/
    cd ../client
    npm install
    cp .env.example .env
-   # Edit .env with your API URL (default: http://localhost:3000/api)
+   # Edit .env with your API URL (default: http://localhost:5000/api)
    ```
 
 4. **Start the development servers**
@@ -102,13 +108,31 @@ AuthFlow/
    # In the server directory
    npm run dev
    
+   #or serverless
+   npm run offline
+   
    # In a new terminal, in the client directory
    npm run dev
    ```
 
 5. **Access the application**
    - Frontend: http://localhost:5173
-   - API Base URL: http://localhost:3000/api
+   - API Base URL: http://localhost:5000/api
+
+## Deployment
+
+1. **Deploy the backend**
+   development
+   ```bash
+   cd server
+   npm run deploy
+   ```
+   production
+   ```bash
+   cd server
+   npm run deploy:prod
+   ```
+
 
 ## 🔧 Environment Variables
 
@@ -161,7 +185,7 @@ GOOGLE_CALLBACK_URL=http://localhost:your_port_here/dev/api/auth/google/callback
 ### Frontend (`.env` in `client/`)
 ```env
 # API Configuration
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
 ## 📚 Documentation

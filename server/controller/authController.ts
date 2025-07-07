@@ -13,17 +13,12 @@ import { CustomRequest } from '../types/express';
 // Login with email or username
 const login = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { identifier, password }: { identifier?: string; password?: string } = req.body;
-
-    if (!identifier || !password) {
-      next(new AppError('Please provide identifier and password', 400));
-      return;
-    }
+    const { identifier, password }: { identifier: string; password: string } = req.body;
 
     // Find user by email or username
     const user: IUser | null = await User.findOne({
       $or: [{ email: identifier }, { username: identifier }],
-    }).select('+password'); // Explicitly include password
+    }).select('+password').select('+googleId'); // Explicitly include password
 
     if (!user) {
       next(new AppError('No account found, create an account first', 400));
@@ -135,7 +130,7 @@ const login = asyncHandler(
           bio: user.bio,
           isEmailVerified: user.isEmailVerified,
           createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          isGoogleLinked: !!user.googleId,
         },
       },
       'Login successful'
@@ -147,12 +142,7 @@ const login = asyncHandler(
 // Register new user
 const register = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { email, password }: { email?: string; password?: string } = req.body;
-
-    if (!email || !password) {
-      next(new AppError('Please provide email and password', 400));
-      return;
-    }
+    const { email, password }: { email: string; password: string } = req.body;
 
     // Check if email already exists
     const existingUser: IUser | null = await User.findOne({
@@ -201,23 +191,19 @@ const register = asyncHandler(
 // Verify OTP
 const verifyOtp = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { otp }: { otp?: string } = req.body;
-
-    if (!otp) {
-      next(new AppError('OTP is required', 400));
+    const { otp }: { otp: string } = req.body;
+    
+    if (req.user.isEmailVerified) {
+      next(new AppError('Email is already verified', 400));
       return;
     }
-
-    const user: IUser | null = await User.findOne({ email: req.user?.email });
-
+    try {
+    const user: IUser | null = await User.findById(req.user.id);
     if (!user) {
       next(new AppError('User not found', 404));
       return;
     }
-    if (user.isEmailVerified) {
-      next(new AppError('Email is already verified', 400));
-      return;
-    }
+
 
     // Verify OTP
     const otpVerification = otpManager.verifyOTP(user.email, otp);
@@ -232,30 +218,24 @@ const verifyOtp = asyncHandler(
 
     sendSuccess(res, { message: 'OTP verified successfully' });
     return;
+    }
+    catch (err: any) {
+      next(new AppError(err.message || 'Failed to verify OTP', 500));
+      return;
+    }
   }
 );
 
 // Resend OTP
 const resendOtp = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const userEmail = req.user?.email;
-
-    if (!userEmail) {
-      next(new AppError('User email not found in token', 400));
-      return;
-    }
-
-    const user: IUser | null = await User.findOne({ email: userEmail });
-    if (!user) {
-      next(new AppError('User not found', 404));
-      return;
-    }
+    const user = req.user;
 
     if (user.isEmailVerified) {
       next(new AppError('Email is already verified', 400));
       return;
     }
-
+    try {
     // Check if there's a recent OTP attempt
     const existingOtp = otpManager.getOtpData(user.email);
     if (existingOtp) {
@@ -271,18 +251,18 @@ const resendOtp = asyncHandler(
 
     sendSuccess(res, null, 'OTP sent to your email');
     return;
+    }
+    catch (err: any) {
+    next(new AppError(err.message || 'Failed to send OTP', 500));
+    return;
+    }
   }
 );
 
 // Forgot password
 const forgotPassword = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { identifier }: { identifier?: string } = req.body; // Can be email or username
-
-    if (!identifier) {
-      next(new AppError('Identifier is required', 400));
-      return;
-    }
+    const { identifier }: { identifier: string } = req.body;
 
     // Find user by email or username
     const user: IUser | null = await User.findOne({
@@ -293,8 +273,9 @@ const forgotPassword = asyncHandler(
       next(new AppError('No account found with that email or username', 404));
       return;
     }
-    if (user.username === 'testuser') {
-      next(new AppError('testuser cannot reset password', 400));
+
+    if (user.email === 'testUser1@gmail.com') {
+      next(new AppError('Test User cannot reset password', 400));
       return;
     }
 
@@ -340,14 +321,39 @@ const refreshAccessToken = asyncHandler(
   }
 );
 
+/**
+ * Controller to check username availability.
+ */
+const checkUsernameAvailability = asyncHandler(
+  async (req: Request,
+  res: Response,
+  next: NextFunction): Promise<void> => {
+  const username = req.query.username || req.params.username;
+  try {
+
+    const existingUser: IUser | null = await User.findOne({ username });
+  
+      res.status(200).json({
+        status: existingUser ? 'error' : 'success',
+        data: {
+          available: !existingUser,
+        },
+        message: existingUser ? 'Username is already taken.' : 'Username is available.',
+      });
+      return;
+    }
+    catch (err: any) {
+    console.error('Username check error:', err.message);
+    next(new AppError('Failed to check username availability. Please try again.', 500));
+      return;
+  }
+});
+
 // Logout user (invalidate refresh token)
 const logout = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const userId = req.user?.id;
-    if (!userId) {
-      next(new AppError('User ID is required', 400));
-      return;
-    }
+    const userId = req.user.id;
+ try {
     await invalidateRefreshToken(userId);
 
     // Clear refresh token cookie
@@ -356,10 +362,16 @@ const logout = asyncHandler(
     sendSuccess(res, null, 'Logged out successfully');
     return;
   }
+  catch (err: any) {
+    console.error('Logout error:', err.message);
+    next(new AppError('Failed to logout. Please try again.', 500));
+    return;
+    }
+  }
 );
 
 // Google authentication callback
-const googleAuthCallback = async (req: Request, res: Response) => {
+const googleAuthCallback = async (req: CustomRequest, res: Response) => {
   try {
     if (!req.user) {
       return res.redirect(
@@ -387,7 +399,7 @@ const googleAuthCallback = async (req: Request, res: Response) => {
               username: user.username,
               bio: user.bio,
               createdAt: user.createdAt,
-              updatedAt: user.updatedAt,
+              isGoogleLinked: true,
             }
           : {}),
       })
@@ -407,6 +419,7 @@ export {
   resendOtp,
   forgotPassword,
   refreshAccessToken,
+  checkUsernameAvailability,
   logout,
   googleAuthCallback,
 };

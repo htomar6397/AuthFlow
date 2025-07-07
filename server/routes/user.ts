@@ -9,10 +9,9 @@ import {
 import {
   checkCompleteProfile,
   checkEmailVerification,
-  checkUsernameAvailability,
 } from '../middleware/flowCheckMiddleware';
 import { handleValidationErrors } from '../middleware/errorMiddleware';
-import { completeProfileValidation, changePasswordValidation } from '../utils/validation';
+import { completeProfileValidation, changePasswordValidation, updateProfileValidation } from '../utils/validation';
 
 const router: Router = express.Router();
 
@@ -25,11 +24,10 @@ router.post(
   '/complete-profile',
   completeProfileValidation,
   handleValidationErrors,
-  checkUsernameAvailability,
   completeProfile
 );
 router.use(checkCompleteProfile);
-router.post('/update-profile', updateProfile);
+router.post('/update-profile', updateProfileValidation, handleValidationErrors, updateProfile);
 router.post('/change-password', changePasswordValidation, handleValidationErrors, changePassword);
 
 // Delete account route

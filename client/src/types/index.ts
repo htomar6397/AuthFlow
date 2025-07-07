@@ -28,7 +28,7 @@ export interface User {
   bio?: string;
   username?: string;
   createdAt?: string;
-  updatedAt?: string;
+  isGoogleLinked?: boolean;
 }
 
 export interface AuthResponse {

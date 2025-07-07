@@ -14,12 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import useUserStore from '@/stores/userStore';
+import { DialogClose } from '@radix-ui/react-dialog';
 
-interface ChangePasswordFormProps {
-  onClose: () => void;
-}
 
-export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
+export function ChangePasswordForm() {
   const { changePassword } = useUserStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -37,12 +35,6 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
 
   // Removed isFormValid check to always enable the button and show inline errors
 
-  const handleCancel = () => {
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -55,10 +47,9 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
       setIsLoading(true);
       await changePassword(currentPassword, newPassword);
       form.reset();
-      handleCancel();
     } catch (error) {
       console.error('Failed to change password:', error);
-    } finally {
+      } finally {
       setIsLoading(false);
     }
   };
@@ -162,15 +153,12 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
         </div>
         
         <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
+        <DialogClose asChild>
+              <Button type="button" variant="outline" className="flex-1" disabled={isLoading}>
+                Cancel
+              </Button>
+            </DialogClose>
+          
           <Button 
             type="submit" 
             disabled={isLoading}

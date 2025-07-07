@@ -6,29 +6,28 @@ import asyncHandler from '../utils/asyncHandler';
 import AppError from '../middleware/AppError';
 import { sendSuccess } from '../utils/responseHandler';
 import { deleteCookie } from '../services/cookieService';
+import { CustomRequest } from '../types/express';
 
-interface CustomRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    isEmailVerified: boolean;
-    username?: string | null;
-  };
-  body: any;
-}
+
 
 const completeProfile = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { username, name, bio }: { username?: string; name?: string; bio?: string } = req.body;
-    
-    const user: IUser | null = await User.findOne({ email: req.user?.email });
+    const { username, name, bio }: { username: string; name: string; bio?: string } = req.body;
+    try {
+    const user: IUser | null = await User.findById(req.user.id).select('+googleId');
    
     if (!user) {
       next(new AppError('User not found', 404));
       return;
     }
+
     if(user.username){
       next(new AppError('profile is already completed', 400));
+      return;
+    }
+    const isUsernameTaken = await User.findOne({ username });
+    if (isUsernameTaken && isUsernameTaken.email !== req.user?.email) {
+      next(new AppError('Username is already taken', 400));
       return;
     }
 
@@ -50,67 +49,65 @@ const completeProfile = asyncHandler(
         bio: user.bio,
         isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        isGoogleLinked: !!user.googleId,
       },
       'Profile completed successfully'
     );
     return;
   }
+  catch (error : any) {
+    next(new AppError(error.message || 'Failed to complete profile', 500));
+    return;
+    }
+  }
 );
 
 const me = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const user: IUser | null = await User.findOne(
-      { email: req.user?.email },
-      'email username name bio isEmailVerified createdAt updatedAt'
-    ).lean();
-    if (!user) {
-      next(new AppError('User not found', 404));
-      return;
-    }
+    try {
+      const user = await User.findById(req.user.id,
+        'email username name bio isEmailVerified createdAt googleId'
+      ).lean();
+      
+      if (!user) {
+        next(new AppError('User not found', 404));
+        return;
+      }
+      
+      // Create a new object that matches the expected return type
+      const userResponse = {
+        ...user,
+        isGoogleLinked: !!user.googleId
+      };
 
-    sendSuccess(res, user);
-    return;
+      delete userResponse.googleId;
+      
+      sendSuccess(res, userResponse);
+    } catch (error : any) {
+      next(new AppError(error.message || 'Failed to fetch user', 500));
+    }
   }
 );
 
 const updateProfile = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
     const { name, bio, username }: { name?: string; bio?: string; username?: string } = req.body;
-    if (!name && !bio && !username) {
-      next(new AppError('name or bio or username is required', 400));
-      return;
-    }
-    if (username && username.length < 3) {
-      next(new AppError('Username must be at least 3 characters long', 400));
-      return;
-    }
-    if (username && username.length > 30) {
-      next(new AppError('Username must be at most 30 characters long', 400));
-      return;
-    }
-    if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
-      next(new AppError('Username can only contain letters, numbers, and underscores', 400));
-      return;
-    }
-    const isUsernameTaken = await User.findOne({ username });
-    if (isUsernameTaken) {
-      next(new AppError('Username is already taken', 400));
-      return;
+   try{
+    if(username){
+      const isUsernameTaken = await User.findOne({ username });
+      if (isUsernameTaken && isUsernameTaken.email !== req.user?.email) {
+        next(new AppError('Username is already taken', 400));
+        return;
+      }
     }
 
-    const user: IUser | null = await User.findOne({ email: req.user?.email });
+    const user: IUser | null = await User.findById(req.user.id).select('+googleId')
 
     if (!user) {
       next(new AppError('User not found', 404));
       return;
     }
-    if (username) {
-      if (username !== 'testuser' && user.username === 'testuser') {
-        next(new AppError('testuser username cannot be changed', 400));
-        return;
-      }
-    }
+ 
     // Check if the changes are the same as the original values
     const noChangesDetected =
       (name === undefined || name === user.name) &&
@@ -137,38 +134,41 @@ const updateProfile = asyncHandler(
         bio: user.bio,
         isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        isGoogleLinked: !!user.googleId,
       },
       'Profile updated successfully'
     );
     return;
   }
+  catch (error : any) {
+    next(new AppError(error.message || 'Failed to update profile', 500));
+    return;
+    }
+  }
 );
 
 const changePassword = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { password, newPassword }: { password?: string; newPassword?: string } = req.body;
+    const { password, newPassword }: { password: string; newPassword: string } = req.body;
 
-    if (!password || !newPassword) {
-      next(new AppError('Current password and new password are required', 400));
+    if (req.user.email === 'testUser1@gmail.com') {
+      next(new AppError('Test user cannot change password', 400));
       return;
     }
+
     if (password === newPassword) {
       next(new AppError('New password cannot be the same as the current password', 400));
       return;
     }
-
-    const user: IUser | null = await User.findOne({ email: req.user?.email }).select('+password');
+  try{
+    const user: IUser | null = await User.findById(req.user.id).select('+password');
 
     if (!user) {
       next(new AppError('User not found', 404));
       return;
     }
 
-    if (user.username === 'testuser') {
-      next(new AppError('testuser cannot change password', 400));
-      return;
-    }
+   
 
     const isMatch: boolean = await comparePassword(password, user.password);
     if (!isMatch) {
@@ -185,17 +185,23 @@ const changePassword = asyncHandler(
     sendSuccess(res, null, 'Password changed successfully');
     return;
   }
+  catch (error : any) {
+    next(new AppError(error.message || 'Failed to change password', 500));
+    return;
+    }
+  }
 );
 
 const deleteAccount = asyncHandler(
   async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
     const password = req.body.password;
 
-    if (!password) {
-      next(new AppError('Password is required', 400));
+    if (req.user.email === 'testUser1@gmail.com') {
+      next(new AppError('Test user cannot delete account', 400));
       return;
     }
-    const user: IUser | null = await User.findOne({ email: req.user?.email }).select('+password');
+    try{
+    const user: IUser | null = await User.findById(req.user.id).select('+password');
 
     if (!user) {
       next(new AppError('User not found', 404));
@@ -205,10 +211,6 @@ const deleteAccount = asyncHandler(
     const isMatch: boolean = await comparePassword(password, user.password);
     if (!isMatch) {
       next(new AppError('Invalid password', 400));
-      return;
-    }
-    if (user.username === 'testuser') {
-      next(new AppError('testuser cannot delete account', 400));
       return;
     }
     // Delete the user document
@@ -221,6 +223,11 @@ const deleteAccount = asyncHandler(
     sendSuccess(res, null, 'Account deleted successfully');
     return;
   }
+  catch (error : any) {
+    next(new AppError(error.message || 'Failed to delete account', 500));
+    return;
+    }
+    }
 );
 
 export { completeProfile, me, updateProfile, changePassword, deleteAccount };

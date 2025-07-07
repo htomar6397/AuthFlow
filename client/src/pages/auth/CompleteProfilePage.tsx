@@ -107,7 +107,7 @@ export function CompleteProfilePage() {
       await completeProfile({
         name: formData.name,
         username: formData.username,
-        bio: formData?.bio 
+        bio: formData?.bio ? formData.bio : undefined,
       });
       navigate('/')
 

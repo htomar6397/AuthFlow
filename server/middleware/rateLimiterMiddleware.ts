@@ -3,10 +3,34 @@ import RateLimiterRedis from 'rate-limiter-flexible/lib/rateLimiterRedis';
 import { client } from '../config/redis';
 import AppError from './AppError';
 
+// Helper function to format duration in milliseconds to human-readable format
+const formatTime = (ms: number): string => {
+  const seconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+};
+
+// Helper function to format duration in milliseconds to human-readable format
+const formatDuration = (ms: number): string => {
+  const seconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours >= 1) return `${hours} hour${hours > 1 ? 's' : ''}`;
+  if (minutes >= 1) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+};
+
 interface RateLimitConfig {
   points: number;
   duration: number;
-  message: string;
+  message: string | ((this: RateLimitConfig, msBeforeNext: number) => string);
   blockDuration?: number;
 }
 
@@ -25,39 +49,64 @@ const rateLimitConfigs: RateLimitConfigs = {
   default: {
     points: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
     duration: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900', 10),
-    message: 'Too many requests, try again later',
+    message: function(msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      const duration = this.duration * 1000;
+      return `Too many requests. You can only make ${this.points} requests per ${formatDuration(duration)}. Try again in ${timeLeft}.`;
+    },
   },
   auth: {
     points: 20,
     duration: 15 * 60,
-    message: 'Too many auth attempts, try again later',
+    message: function(msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      const duration = this.duration * 1000;
+      return `Too many login attempts. You can only try ${this.points} times every ${formatDuration(duration)}. Try again in ${timeLeft}.`;
+    },
   },
   passwordReset: {
     points: 5,
     duration: 60 * 60,
-    message: 'Too many password resets, try again later',
+    message: function(msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      const duration = this.duration * 1000;
+      return `Too many password reset attempts. You can only request ${this.points} resets every ${formatDuration(duration)}. Try again in ${timeLeft}.`;
+    },
   },
   usernameCheck: {
     points: 30,
     duration: 60,
-    message: 'Too many username checks, wait a minute',
+    message: function(msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      const duration = this.duration * 1000;
+      return `Too many username checks. You can check ${this.points} usernames per minute. Try again in ${timeLeft}.`;
+    },
   },
   accountCreation: {
     points: 5,
     duration: 60 * 60,
-    message: 'Too many accounts created, try again in an hour',
+    message: function(msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      return `Too many account creation attempts. You can only create ${this.points} accounts per hour. Try again in ${timeLeft}.`;
+    },
   },
   verifyotp: {
     points: 5,
     duration: 60 * 60,
     blockDuration: 60 * 60,
-    message: 'Too many OTP attempts, try again later',
+    message: function(this: RateLimitConfig, msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      return `Too many OTP attempts. You can only try ${this.points} times. Try again in ${timeLeft}.`;
+    },
   },
   resendOtp: {
     points: 3,
-    duration: 60 * 60,
+    duration: 60 * 5,
     blockDuration: 60 * 60,
-    message: 'Too many OTP resend attempts, try again later',
+    message: function(this: RateLimitConfig, msBeforeNext: number) {
+      const timeLeft = formatTime(msBeforeNext);
+      return `Too many OTP resend attempts. You can only request ${this.points} OTPs. Try again in ${timeLeft}.`;
+    },
   },
 };
 
@@ -131,9 +180,16 @@ export const applyRateLimit = async (req: Request, res: Response, next: NextFunc
 
       res.set('Retry-After', (retryAfter / 60).toString() + 'm');
 
-      next(
-        new AppError(isOtpPath ? 'Too many OTP attempts, try again later' : config.message, 429)
-      );
+      let errorMessage: string;
+      if (isOtpPath) {
+        const timeLeft = formatTime(rateLimitRes.msBeforeNext);
+        errorMessage = `Too many OTP attempts. You can only try ${config.points} times. Try again in ${timeLeft}.`;
+      } else if (typeof config.message === 'function') {
+        errorMessage = config.message(rateLimitRes.msBeforeNext);
+      } else {
+        errorMessage = config.message;
+      }
+      next(new AppError(errorMessage, 429));
     }
   } catch (error) {
     console.error('Rate limiter error:', error);

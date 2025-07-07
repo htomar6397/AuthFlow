@@ -69,8 +69,7 @@ export function LoginPage() {
         type: 'manual',
         message: errorMessage 
       });
-      console.error('Login error caught in component:',typeof err,err);
-    }
+   }
   };
 
   /**

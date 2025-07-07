@@ -170,7 +170,7 @@ export default function HomePage() {
                           username: user?.username || '',
                           bio: user?.bio || ''
                         }}
-                        onClose={() => {}}
+                      
                       />
                     </DialogContent>
                   </Dialog>
@@ -189,7 +189,7 @@ export default function HomePage() {
                           Enter your current password and set a new one.
                         </DialogDescription>
                       </DialogHeader>
-                      <ChangePasswordForm onClose={() => {}} />
+                      <ChangePasswordForm />
                     </DialogContent>
                   </Dialog>
 
@@ -257,17 +257,24 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">Account Activity</h3>
-                      <div className="grid gap-4 mt-3 sm:grid-cols-2">
+                      <div className="mt-3">
                         <div className="bg-muted/30 border border-border/20 dark:border-border/30 p-3 rounded-lg">
                           <p className="text-sm text-muted-foreground">Member since</p>
                           <p className="font-medium">{formatDate(user?.createdAt)}</p>
                         </div>
-                        {user?.updatedAt && (
-                          <div className="bg-muted/30 border border-border/20 dark:border-border/30 p-3 rounded-lg">
-                            <p className="text-sm text-muted-foreground">Last updated</p>
-                            <p className="font-medium">{formatDate(user.updatedAt)}</p>
+                        <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/20 dark:border-border/30">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Google Account</p>
+                            <p className="font-medium">
+                              {user?.isGoogleLinked ? 'Connected' : 'Not Connected'}
+                            </p>
+                            {!user?.isGoogleLinked && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Try logging in with Google using the same email to connect your account
+                              </p>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>

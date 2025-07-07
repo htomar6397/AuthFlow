@@ -7,10 +7,10 @@ import {
   resendOtp,
   forgotPassword,
   refreshAccessToken,
+  checkUsernameAvailability,
   logout,
   googleAuthCallback,
 } from '../controller/authController';
-import { checkUsernameAvailability } from '../middleware/flowCheckMiddleware';
 import { authenticate } from '../middleware/authMiddleware';
 import { handleValidationErrors } from '../middleware/errorMiddleware';
 import {

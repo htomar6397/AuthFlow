@@ -52,8 +52,8 @@ const useUserStore = create<UserState>((set) => ({
       }));
       toast.success('Profile updated successfully');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
-      set({ error: errorMessage });
+      const errorObj = error as ApiError; 
+      set({ error: errorObj.message });
       throw error;
     } finally {
       set({ isLoading: false });
